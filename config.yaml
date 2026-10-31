@@ -16,7 +16,7 @@ embeddings:
 
 data:
   raw_xlsx: "data/raw/AD Notice of Proposed Rulemaking (AD NPRM).xlsx"
-  sqlite_path: data/index/adtrace.sqlite
+  sqlite_path: data/processed/adtrace.db
   embeddings_path: data/index/emb_sentences.npy
   embedding_ids_path: data/index/ids.json
   coverage_report: data/processed/coverage_report.json

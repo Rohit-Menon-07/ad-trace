@@ -53,7 +53,10 @@ One sheet, 431 rows, 22 columns: Docket Number, Subject Heading, Status, CFR Par
 - `frontend/src/api/client.ts`: the only data layer (`api.*` fetch wrappers; Vite proxies /api → :8000). `frontend/src/mocks/scenarioPresets.ts`: dev-only request presets.
 - `scripts/tasks.py`: task runner behind the Makefile. Windows dev box has no `make`: use `.venv/Scripts/python scripts/tasks.py {setup,dev,test,lint,types}`.
 - Python venv: `.venv/` (Python 3.14 locally; code targets 3.11+).
+- `backend/app/ingest/`: loader (raw_* kept untouched), clean, makes (alias rules), duplicates (docket classes), sentences (offset-exact splitter, ids `R0001#s1`), db, audit, run (CLI `python -m backend.app.ingest.run` = `make ingest`, idempotent). Output: `data/processed/adtrace.db` (tables records, sentences, record_makes, vocab[kind=make], docket_groups, ingest_meta) plus generated `configs/alias_make.yaml`, `docs/make_audit.md`, `docs/duplicates_audit.md`.
+- Ingest facts: 431 records, 323 dockets, 2102 sentences, 99 canonical makes, 1 empty summary, 1 is_duplicate (R0195), docket classes single 220 / revision_series 93 / multi_product 5 / correction 4 / exact_duplicate 1. Same-docket rows are mostly NPRM → SNPRM → withdrawal lineage (to be parsed in Prompt 4). Source has PDF artifacts like "AD 2024- 05-13" that extraction must tolerate.
 
 ## Progress log
 - Prompt 1: repo scaffold, CLAUDE.md, DECISIONS.md, frontend shell on MOCK data with dev scenario switcher.
 - Prompt 2: Pydantic schemas + generated TS types, FastAPI mock backend (all 8 endpoints, mock=true), UI wired to the API, pytest suite, `make dev` runs both servers.
+- Prompt 3: ingestion + cleaning into SQLite, make alias map + audit, duplicate-docket audit, sentence splitter, 85 tests.

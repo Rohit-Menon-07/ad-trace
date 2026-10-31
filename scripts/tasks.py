@@ -84,6 +84,10 @@ def lint() -> None:
     run(NPM, "run", "typecheck", cwd=FRONTEND)
 
 
+def ingest() -> None:
+    run(PY, "-m", "backend.app.ingest.run")
+
+
 def not_built(name: str) -> None:
     print(f"`{name}` is not implemented yet (backend pipeline is MOCK in Prompt 2).")
     sys.exit(1)
@@ -95,7 +99,7 @@ TASKS = {
     "types": types,
     "test": test,
     "lint": lint,
-    "ingest": lambda: not_built("ingest"),
+    "ingest": ingest,
     "eval": lambda: not_built("eval"),
 }
 

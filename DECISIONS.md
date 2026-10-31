@@ -39,3 +39,32 @@ Deviations from docs/SPEC.md and choices made where it was ambiguous. One line e
 24. **The scenario switcher is now a set of dev presets that fill the form and call the real API.** It shows only under `vite dev` with `VITE_SCENARIO_SWITCHER=1` (committed `frontend/.env.development`; no secrets). *Reason: "keep the switcher behind a dev flag", while the response still comes from the backend.*
 25. **The Makefile delegates to `scripts/tasks.py`, which runs uvicorn and Vite together** and stops both process trees on exit. *Reason: GNU make isn't on the dev box; `python scripts/tasks.py X` is exactly `make X`.*
 26. **Frontend mock data moved to `backend/app/mocks.py`.** `frontend/src/mocks/` now holds only the request presets. *Reason: one copy of the MOCK data, served through the real contract.*
+
+## Prompt 3: ingestion and cleaning (items marked REVIEW need a human decision)
+
+27. **The CLI is `python -m backend.app.ingest.run`, not `python -m app.ingest.run`.** *Reason: the package is `backend.app`; `make ingest` calls it.*
+28. **The DB lives at `data/processed/adtrace.db`** (config `data.sqlite_path` updated from `data/index/adtrace.sqlite`). *Reason: the Prompt 3 instruction.*
+29. **Sentence ids are 1-based (`R0001#s1`); `ingest_meta.sentence_id_base = 1`.** The Prompt 2 MOCK records still use `#s0` and go away with the mocks. *Reason: the Prompt 3 instruction.*
+30. **The workbook is read with `dtype=str, keep_default_na=False`.** Raw cells are stored exactly as read (`raw_*`); only empty cells become NULL. *Reason: pandas would otherwise turn text like "NA" or "None" into null.*
+31. **REVIEW. A literal two-character backslash-n in 17 summaries is treated as whitespace** in cleaned text; raw is unchanged. *Reason: it's an export artifact that otherwise appears inside sentences.*
+32. **REVIEW. PDF artifacts such as "AD 2024- 05-13" and "PC- 6/A-H1" (a space inside an identifier) are NOT repaired.** *Reason: rewriting identifiers is guessing; Prompt 4 extraction must tolerate them.*
+33. **The `[ouml]`-style GPO entities in summaries are left as is.** *Reason: they are verbatim source text, and quotes must stay substrings of it.*
+34. **Dates are strict `M/D/YYYY` with calendar validation; anything else becomes null and is logged.** Result: 0 unparseable, 4 missing Comments Due Date.
+35. **REVIEW. `fr_citation` = "<volume> FR <first page>" only when the Citation contains "Volume N".** 12 rows from 2008–2010 ("Federal Register: July 21, 2010") get null; `citation_text` and `pages` are still stored. *Reason: deriving the volume from the year would be inference.*
+36. **Make cells that list several makes (`A | B`, 5 rows) are split.** Each part is canonicalised and stored in `record_makes`; `records.make_canonical` joins them with ` | `. *Reason: a filter on any one listed make must match.*
+37. **Canonical display name = the most frequent raw spelling in a normalised-key group** (ties: longer, then alphabetical). *Reason: deterministic, and the name users see most often.*
+38. **Explicit merges beyond the key rule:**
+    - "Airbus Helicopters Deutschland GmbH (AHD)" → "Airbus Helicopters Deutschland GmbH";
+    - "Erickson Air-Crane Incorporated DBA Erickson Air-Crane" → "Erickson Air-Crane Incorporated".
+
+    *Reason: the same name plus an abbreviation or DBA suffix.*
+39. **REVIEW. Plain "Airbus" (15 rows): none has "Airbus SAS" in its Subject Heading, so all 15 stay "Airbus"** (family Airbus). "Airbus Industrie" (2 rows, 2004 era) also stays separate. Neither was merged into Airbus SAS, per the rule.
+40. **REVIEW. Likely same-entity pairs were NOT merged because no rule covers them:** Embraer/Embraer S.A., Cessna/Cessna Aircraft Company, Piper/Piper Aircraft Inc., Gulfstream Aerospace Corporation/LP, the Bell Textron variants, the Pratt & Whitney variants, GE/"GE Aerospace", BAE Systems variants, Eurocopter (the predecessor of Airbus Helicopters). The full list is in docs/make_audit.md. *Reason: the conservative default. Retrieval should use make_family or fuzzy linking so these don't hide records.*
+41. **3 rows with no Make stay null.** They are not inferred from the Subject Heading. *Reason: no guessing; listed in make_audit.md.*
+42. **REVIEW. A new docket class `revision_series` (93 groups, 194 rows) was added** beside exact_duplicate / multi_product / correction. Most same-docket groups are NPRM → supplemental/revised NPRM → withdrawal publications, not duplicates. *Reason: the three-class brief misdescribes the data; this lineage drives "latest version" logic in Prompt 4.*
+43. **An exact duplicate means the same docket plus identical make_raw, model_raw, subject_heading and summary.** Classes are checked in the order correction, exact_duplicate, multi_product, revision_series.
+44. **REVIEW. One exact duplicate: R0195 (issued 2021-01-20) is marked `duplicate_of` R0277 (2011-01-27), docket FAA-2011-0099.** The earliest copy is kept. The FR pages differ, so this may be a genuine republication. Nothing is deleted.
+45. **`multi_product` compares per-row canonical make sets** (or two different non-empty Model values). A docket where only one row has a Model filled is a revision_series. Result: 5 groups, including real conflicts (Boeing 777 vs Dowty propellers in FAA-2011-0033) and type-certificate transfers (Bombardier → De Havilland).
+46. **Correction rows (4, docket ends in `R1` or Comments mention an OFR correction) record their base docket in a note.** None of the base dockets is in the dataset.
+47. **Splitter rule: a protected abbreviation (U.S., No., Inc., Ltd., Co., S.A., S.p.A., Jr., …) does not end a sentence unless the next word is a strong starter ("This", "The", "We", …).** Periods inside matched brackets never split; unmatched brackets are ignored. *Reason: handles "Bombardier, Inc., Model" and "Textron Inc. This proposed AD" alike. On this dataset the override never fires.*
+48. **Ingest regenerates `configs/alias_make.yaml`, `docs/make_audit.md` and `docs/duplicates_audit.md` deterministically on every run**, and builds the DB in a temp file that is atomically swapped in. *Reason: idempotent; rules are reviewed in code, and the yaml is the generated view of them.*
