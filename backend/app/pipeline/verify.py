@@ -100,6 +100,31 @@ RX_DESIGNATOR = re.compile(
 )
 RX_SUFFIX = re.compile(r"(?<![\w-])-\s?\d{2,4}[A-Z]{0,3}\b")
 RX_NUMBER = re.compile(r"(?<![\w.])\d+(?:[.,]\d+)*(?![\w])")
+# Spelled-out counts ("three inspections") must be grounded like digits. "one" is excluded: too often a pronoun.
+_UNITS = {w: i for i, w in enumerate("two three four five six seven eight nine".split(), 2)}
+_TEENS = {
+    w: i
+    for i, w in enumerate("ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen".split(), 10)
+}
+_TENS = {w: i * 10 for i, w in enumerate("twenty thirty forty fifty sixty seventy eighty ninety".split(), 2)}
+RX_NUMBER_WORD = re.compile(
+    rf"\b(?:({'|'.join(_TENS)})(?:[-\s]({'|'.join(_UNITS)}|one))?|({'|'.join(_TEENS)})|({'|'.join(_UNITS)}))\b",
+    re.IGNORECASE,
+)
+
+
+def number_words(text: str) -> set[str]:
+    """Digit strings for spelled-out numbers 2-99 ('twenty-five' -> '25')."""
+    out: set[str] = set()
+    for m in RX_NUMBER_WORD.finditer(text):
+        tens, unit, teen, single = (g.lower() if g else None for g in m.groups())
+        if tens:
+            out.add(str(_TENS[tens] + (1 if unit == "one" else _UNITS.get(unit or "", 0))))
+        elif teen:
+            out.add(str(_TEENS[teen]))
+        elif single:
+            out.add(str(_UNITS[single]))
+    return out
 
 
 @dataclass
@@ -170,6 +195,7 @@ def extract_entities(text: str) -> Entities:
         spans.append(m.span())
     for m in RX_NUMBER.finditer(_mask(text, spans)):
         ents.numbers.add(m.group(0).replace(",", ""))
+    ents.numbers |= number_words(_mask(text, spans))
     return ents
 
 
@@ -195,6 +221,7 @@ class Haystack:
         ents.codes |= {c for c in extra_codes if c}
         digits = {d for t in texts for d in re.findall(r"\d+(?:\.\d+)?", html.unescape(t).replace(",", ""))}
         digits |= {d for m in models for d in re.findall(r"\d+", m)}
+        digits |= {d for t in texts for d in number_words(html.unescape(t))}
         loose = {re.sub(r"[^A-Z0-9]", "", d) for d in ents.designators}
         return cls(ents, digits, loose)
 

@@ -130,6 +130,22 @@ def test_records_listing_the_model_rank_before_unknown_lists(retriever: Retrieve
     assert order == sorted(order) and "R0012" not in [h.record_id for h in res.records[:8]]
 
 
+@pytest.mark.parametrize("mode", ["hybrid", "bm25"])
+def test_exact_ad_number_in_query_ranks_first(retriever: Retriever, mode: str) -> None:
+    """REAL regression (eval v1 A-SUP-01/06): fusion buried the record that cites the AD number."""
+    for q, rid in (("Which proposal would supersede AD 2026-09-02?", "R0002"),
+                   ("Which proposal would supersede AD 2015-07-03?", "R0027")):  # fmt: skip
+        res = retriever.retrieve(q, Filters(), mode)
+        assert res.records[0].record_id == rid and res.features["id_matches"] >= 1
+        assert any("identifier" in s.tags for s in res.records[0].sentences)
+
+
+def test_docket_identifier_is_whole_token(retriever: Retriever) -> None:
+    assert retriever.identifier_hits("docket FAA-2026-1181", set(retriever.meta)) == {}
+    assert "R0166" in retriever.identifier_hits("FAA-2022-1308", set(retriever.meta))  # matches its R1 revision
+    assert retriever.retrieve("AD 2026-09-02", Filters(), "dense").features["id_matches"] == 0  # dense ablation pure
+
+
 def test_within_record_evidence_uses_sentence_text(retriever: Retriever) -> None:
     """REAL regression: the radio-management-panel sentence R0003#s2 must be chosen as evidence even though every
     R0003 sentence matches the model columns equally."""

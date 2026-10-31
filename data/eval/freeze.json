@@ -1,11 +1,11 @@
 {
-  "cases_sha256": "50ccd6b403ec9e223b3101a06f49e6454e8df397d9f96e4821c60f1a53d04de4",
+  "cases_sha256": "7137627d075c2f67a85b2004dee9f07619d49329e2f950922982f68f57dfd721",
   "manual_decisions_sha256": "da41e379b354c61b675274af3fae92d35c0f769fe531cdffb72b312eadd429d4",
-  "config_sha256": "94c4c6bdbd3af1a25dd808278c4a8dc613da394158e1ee0ac223600ac9acc13b",
+  "config_sha256": "7b54558e4187c62acd6f4e6b426853dbf97a35e7db84112da79a19ff6c531aa4",
   "thresholds": {
     "min_top_cosine": 0.62,
     "min_top_bm25_norm": 0.9
   },
-  "frozen_at": "2026-10-31T07:14:21.679434+00:00",
+  "frozen_at": "2026-10-31T07:47:47.841797+00:00",
   "manual_confirmed": 0
 }

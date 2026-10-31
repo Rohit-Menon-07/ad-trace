@@ -58,6 +58,42 @@ def _make(conn: sqlite3.Connection, rid: str) -> str:
     return conn.execute("SELECT make_canonical FROM records WHERE id = ?", (rid,)).fetchone()[0]
 
 
+def most_specific_model(models: list[str]) -> str:
+    """First listed model that is not a family prefix of another listed one ('206L' < '206L-1' -> '206L-1').
+    v1 took the first listed model, which made A-STAT-05 a family-only (clarification) query by construction."""
+    models = [m.strip() for m in models if m.strip()]
+    for m in models:
+        if not any(n != m and n.startswith(m) for n in models):
+            return m
+    return models[0]
+
+
+def _serial_undetermined_models(conn: sqlite3.Connection, col: dict[str, list[str]]) -> list[tuple[str, str]]:
+    """Up to 3 Model-column designators for which a serial query cannot be decided from the RAW text: every
+    non-duplicate record whose raw Model column lists it has a summary saying 'certain' (no 'all'), and no record
+    summary in the dataset names it with a serial number. Deterministic: sorted designators with a hyphen."""
+    rows = {rid: (raw_model or "", summary or "") for rid, raw_model, summary in conn.execute(
+        "SELECT id, raw_model, raw_summary FROM records WHERE is_duplicate = 0")}  # fmt: skip
+    out: list[tuple[str, str]] = []
+    seen: set[frozenset[str]] = set()
+    for m in sorted(x for x in col if "-" in x and " " not in x):
+        rids = col[m]
+        if frozenset(rids) in seen:  # one case per distinct set of listing records
+            continue
+        texts = [rows[r][1] for r in rids]
+        if not all(re.search(r"\bcertain\b", t, re.IGNORECASE) and not re.search(r"\ball\b", t, re.IGNORECASE)
+                   for t in texts):  # fmt: skip
+            continue
+        others = [rows[r][1] for r in rows if r not in rids and m in rows[r][1]]
+        if others or any(re.search(r"serial", t, re.IGNORECASE) for t in texts):
+            continue
+        seen.add(frozenset(rids))
+        out.append((m, _make(conn, rids[0])))
+        if len(out) == 3:
+            break
+    return out
+
+
 def auto_cases(conn: sqlite3.Connection) -> list[dict[str, Any]]:
     col = _column_records(conn)
     out: list[dict[str, Any]] = []
@@ -96,9 +132,9 @@ def auto_cases(conn: sqlite3.Connection) -> list[dict[str, Any]]:
                         notes="CIRCULAR: expected verdict from the raw Model column, which the engine also reads"))  # fmt: skip
 
     # serial applicability with resolved serials: NONE exist in the dataset (0 cases). Instead, 3 cases where a
-    # serial is given but every listing record says only 'certain' airplanes -> APPLICABILITY_UNDETERMINED.
-    for i, (m, mk) in enumerate([("PA-28-181", "Piper Aircraft, Inc."), ("PA-32-300", "Piper Aircraft, Inc."),
-                                 ("A330-341", "Airbus SAS")], 1):  # fmt: skip
+    # serial is given and NO record can be decided for that model -> APPLICABILITY_UNDETERMINED. v1 hand-picked
+    # the models and A330-341 was wrong (records R0046/R0061 apply to all A330-341s); v2 selects them by rule.
+    for i, (m, mk) in enumerate(_serial_undetermined_models(conn, col), 1):
         out.append(
             case(
                 f"A-SER-{i:02d}",
@@ -109,7 +145,8 @@ def auto_cases(conn: sqlite3.Connection) -> list[dict[str, Any]]:
                 serial="1234",
                 status="refused",
                 reason="APPLICABILITY_UNDETERMINED",
-                notes="no record states serial ranges; expectation assumes all listing records say 'certain'",
+                notes="selected because every record listing the model says only 'certain' aircraft and none "
+                "states serials (raw Model column + summary qualifier); CIRCULAR with the engine's qualifier rule",
             )
         )
 
@@ -138,7 +175,7 @@ def auto_cases(conn: sqlite3.Connection) -> list[dict[str, Any]]:
         due, raw_model = conn.execute(
             "SELECT comments_due_effective, raw_model FROM records WHERE id = ?", (rid,)
         ).fetchone()
-        m = raw_model.split(" | ")[0]
+        m = most_specific_model(raw_model.split(" | "))
         fact = f"comment period OPEN until {due}" if due >= AS_OF else f"comment period CLOSED (closed {due})"
         out.append(
             case(
@@ -321,7 +358,30 @@ def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def review_md(cases: list[dict[str, Any]]) -> str:
+def machine_checks(conn: sqlite3.Connection, cases: list[dict[str, Any]]) -> dict[str, str]:
+    """Manual case id -> machine pre-check of its source sentence and fact substrings against the RAW record.
+    A pass only shows the quote is real; whether the expected answer follows from it is the human's call."""
+    out: dict[str, str] = {}
+    for c in (c for c in cases if c["provenance"] == "manual"):
+        rid = c["expected"]["expected_record_ids"][0]
+        row = conn.execute("SELECT raw_summary, raw_subject_heading FROM records WHERE id = ?", (rid,)).fetchone()
+        raw = " ".join(" ".join(x or "" for x in row).split()) if row else ""
+        src = " ".join(c["source_sentence"].split())
+        parts = [f"source sentence {'FOUND' if src and src in raw else 'NOT FOUND'} verbatim in {rid} raw text"]
+        facts = c["expected"]["required_fact_substrings"]
+        if facts:
+            # Facts are output phrasing ("would supersede AD X"): check their identifiers, else the whole text.
+            keys = [re.findall(r"\d{4}-\d{2}-\d{2,3}", f) or [f] for f in facts]
+            ok = sum(1 for ks in keys if all(k.lower() in raw.lower() for k in ks))
+            parts.append(f"{ok}/{len(facts)} facts' identifiers found")
+        out[c["id"]] = "; ".join(parts)
+    return out
+
+
+def review_md(cases: list[dict[str, Any]], decisions: dict[str, str] | None = None,
+              checks: dict[str, str] | None = None) -> str:  # fmt: skip
+    """Human review file. Existing decisions are carried over verbatim (never reset)."""
+    decisions, checks = decisions or {}, checks or {}
     lines = [
         "# Manual eval cases: AWAITING HUMAN REVIEW",
         "",
@@ -341,7 +401,8 @@ def review_md(cases: list[dict[str, Any]]) -> str:
             f"verdicts={e['expected_verdicts']}, facts={e['required_fact_substrings']}",
             f'- Source sentence ({e["expected_record_ids"][0]}): "{c["source_sentence"]}"',
             f"- Notes: {c['notes'] or '-'}",
-            "- Decision: PENDING",
+            f"- Machine check: {checks.get(c['id'], 'not run')}",
+            f"- Decision: {decisions.get(c['id'], 'PENDING')}",
             "",
         ]
     return "\n".join(lines)
@@ -378,14 +439,15 @@ def build() -> dict[str, Any]:
     conn = sqlite3.connect(repo_path("sqlite_path"))
     try:
         cases = auto_cases(conn) + manual_cases()
+        checks = machine_checks(conn, cases)
     finally:
         conn.close()
     assign_splits(cases)
     EVAL_DIR.mkdir(parents=True, exist_ok=True)
     CASES_PATH.write_text("".join(json.dumps(c, ensure_ascii=False) + "\n" for c in cases), encoding="utf-8",
                           newline="\n")  # fmt: skip
-    if not REVIEW_PATH.exists():  # never overwrite human decisions
-        REVIEW_PATH.write_text(review_md(cases), encoding="utf-8", newline="\n")
+    # Regenerated each build with the human decisions carried over (never reset to PENDING).
+    REVIEW_PATH.write_text(review_md(cases, manual_decisions(), checks), encoding="utf-8", newline="\n")
     manifest = {
         "cases_sha256": sha256(CASES_PATH), "seed": SEED, "dev_share": DEV_SHARE,
         "dev": sorted(c["id"] for c in cases if c["split"] == "dev"),

@@ -55,4 +55,5 @@ verify:
   proposal_words: ["propose", "proposes", "proposed", "proposal", "would", "notice", "nprm"]
   # "AD 2025-09-07 requires ..." describes an existing final AD cited by the proposal: allowed (the AD number
   # itself must still be grounded by the entity check).
-  existing_ad_subject: '\bAD\s+\d{2,4}\s?-\s?\d{2}\s?-\s?\d{2,3}(?:\s+R\d+)?\s+(?:also\s+|currently\s+)?(?:requires|required|mandates)\b'
+  # "The existing AD / that AD / the current AD requires ..." is the same construction without the number.
+  existing_ad_subject: '\b(?:AD\s+\d{2,4}\s?-\s?\d{2}\s?-\s?\d{2,3}(?:\s+R\d+)?|(?:the|that|this)\s+(?:existing|current|earlier|superseded)\s+AD|that\s+AD)\s+(?:also\s+|currently\s+)?(?:requires|required|mandates)\b'

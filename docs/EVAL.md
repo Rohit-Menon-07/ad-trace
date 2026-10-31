@@ -1,11 +1,11 @@
 # AD Trace evaluation (test split)
 
-_Generated 2026-10-31T07:14:32.550384+00:00 by `make eval-test`. Frozen 2026-10-31T07:14:21.679434+00:00; cases sha256 `50ccd6b403ec9e22`; thresholds {'min_top_cosine': 0.62, 'min_top_bm25_norm': 0.9}._
+_Generated 2026-10-31T07:47:59.717800+00:00 by `make eval-test`. Frozen 2026-10-31T07:47:47.841797+00:00; cases sha256 `7137627d075c2f67`; thresholds {'min_top_cosine': 0.62, 'min_top_bm25_norm': 0.9}._
 
 ## Setup
 
 - **Test cases: n = 44** {'lookup': 7, 'model_applicability': 7, 'serial_unresolved': 2, 'supersession': 6, 'status': 3, 'unknown_entity': 3, 'ambiguous_family': 3, 'out_of_scope': 3, 'false_premise': 3, 'injection': 2, 'off_topic': 3, 'empty_summary': 2}; provenance {'auto': 44}.
-- **Manual cases: 24 drafted cases are AWAITING HUMAN REVIEW** (data/eval/manual_review.md) and are NOT included. Every number below comes from AUTO cases only.
+- **Manual cases: 24 drafted cases are AWAITING HUMAN REVIEW** (data/eval/manual_review.md) and are NOT included in any headline number below (they appear only in the separately labelled UNCONFIRMED section).
 - **Circularity caveat:** auto cases are generated from structured fields (Model column, raw summary text, raw dates). They test the pipeline, not extraction quality. Model-applicability auto cases are partly circular: the engine reads the same Model column. Treat high scores on them as plumbing checks, not accuracy evidence.
 - **LLM availability:** no valid ANTHROPIC_API_KEY: generation, verifier, parser and judge fall back or are skipped. Projected cost $0.00.
 - Systems: **B1** B1 BM25 + extractive (keyword search, no LLM, no engine); **B2** B2 dense + extractive (no LLM, no engine); **B3** B3 hybrid + extractive (no LLM, no engine); **S0** S0 hybrid + generation, no verification, no engine (naive RAG); **S1** S1 = S0 + quote and grounding checks; **S2** S2 full system: engine, gates, clarification, generation, all verification layers.
@@ -17,9 +17,9 @@ _Generated 2026-10-31T07:14:32.550384+00:00 by `make eval-test`. Frozen 2026-10-
 | System | Recall@5 | MRR | n |
 |---|---|---|---|
 | B1 | 100.0% [100-100%] | 92.8% [81-100%] | 18 |
-| B2 | 61.1% [39-83%] | 47.3% [28-67%] | 18 |
-| B3 | 77.8% [56-94%] | 77.8% [56-94%] | 18 |
-| S2 | 72.2% [50-89%] | 73.8% [52-90%] | 18 |
+| B2 | 61.1% [39-83%] | 46.8% [28-67%] | 18 |
+| B3 | 88.9% [72-100%] | 88.9% [72-100%] | 18 |
+| S2 | 83.3% [61-100%] | 85.8% [67-100%] | 18 |
 
 S2 retrieves with engine-consistent hard filters (make/model), so its numbers are not a pure ranking comparison.
 
@@ -44,9 +44,9 @@ UNDETERMINED by engine rule: none. Coverage matters more than accuracy here: UND
 | B3 | n/a | 0.0% | n/a [0-0%] | n/a (n=0) | 0/16 | 35 |
 | S0 | n/a | 0.0% | n/a [0-0%] | n/a (n=0) | 0/16 | 35 |
 | S1 | n/a | 0.0% | n/a [0-0%] | n/a (n=0) | 0/16 | 35 |
-| S2 | 94.7% | 94.7% | 94.7% [86-100%] | 100.0% (n=18) | 1/16 | 35 |
+| S2 | 100.0% | 100.0% | 100.0% [100-100%] | 100.0% (n=19) | 0/16 | 35 |
 
-S2 false refusals (answerable cases refused): [{'id': 'A-STAT-05', 'category': 'status', 'status': 'needs_clarification', 'reason': 'AMBIGUOUS_MODEL'}].
+S2 false refusals (answerable cases refused): none.
 
 ## Answer quality and ablation (S0 to S2)
 
@@ -61,12 +61,12 @@ S2 false refusals (answerable cases refused): [{'id': 'A-STAT-05', 'category': '
 
 | System | p50 retrieval | p95 retrieval | p50 end-to-end | p95 end-to-end | cost/query | n |
 |---|---|---|---|---|---|---|
-| B1 | 5.1 ms | 7.6 ms | 7.0 ms | 10.0 ms | $0.0000 | 44 |
-| B2 | 8.6 ms | 10.7 ms | 11.0 ms | 13.0 ms | $0.0000 | 44 |
-| B3 | 15.2 ms | 18.3 ms | 18.0 ms | 21.0 ms | $0.0000 | 44 |
-| S0 | 15.4 ms | 18.8 ms | 19.0 ms | 22.0 ms | $0.0000 | 44 |
-| S1 | 14.9 ms | 19.0 ms | 18.5 ms | 22.9 ms | $0.0000 | 44 |
-| S2 | 13.7 ms | 17.7 ms | 17.0 ms | 23.9 ms | $0.0000 | 44 |
+| B1 | 6.1 ms | 15.5 ms | 9.0 ms | 18.0 ms | $0.0000 | 44 |
+| B2 | 8.5 ms | 11.2 ms | 11.0 ms | 13.9 ms | $0.0000 | 44 |
+| B3 | 16.5 ms | 26.7 ms | 19.5 ms | 30.0 ms | $0.0000 | 44 |
+| S0 | 17.0 ms | 26.4 ms | 20.5 ms | 30.0 ms | $0.0000 | 44 |
+| S1 | 16.5 ms | 26.1 ms | 20.0 ms | 30.0 ms | $0.0000 | 44 |
+| S2 | 14.1 ms | 26.9 ms | 17.0 ms | 32.9 ms | $0.0000 | 44 |
 
 End-to-end is low because no LLM call succeeded in this run; it is not representative of a run with a working key.
 
@@ -74,35 +74,16 @@ End-to-end is low because no LLM call succeeded in this run; it is not represent
 
 VISIBLE = the user sees a warning (refusal card, UNDETERMINED badge, partial). **SILENT = no warning: the dangerous kind; we report it.**
 
-### A-SER-03 (serial_unresolved): missed_refusal (SILENT)
-- Query: Do the proposed ADs apply to our A330-341 serial 1234?
-- Expected: {"status": "refused", "reason_code": "APPLICABILITY_UNDETERMINED"}
-- Observed: answered ; top retrieved ['R0061', 'R0046', 'R0037']
-- Probable cause: no gate fired; expected APPLICABILITY_UNDETERMINED
-- Fix: add or widen the gate for this pattern
+All S2 failures: 0 (0 silent). Full list in data/eval/results_detail.json.
 
-### A-SUP-01 (supersession): record_missed (SILENT)
-- Query: Which proposal would supersede AD 2026-09-02?
-- Expected: {"status": "answered", "expected_record_ids": ["R0002"], "required_fact_substrings": ["would supersede AD 2026-09-02"]}
-- Observed: answered ; top retrieved ['R0051', 'R0005', 'R0149']
-- Probable cause: expected record not in the top 8 retrieved
-- Fix: retrieval (query wording, model linking, ranking tiers)
+## UNCONFIRMED manual cases (machine-checked only; NOT in any number above)
 
-### A-SUP-06 (supersession): record_missed (SILENT)
-- Query: Which proposal would supersede AD 2015-07-03?
-- Expected: {"status": "answered", "expected_record_ids": ["R0027"], "required_fact_substrings": ["would supersede AD 2015-07-03"]}
-- Observed: answered ; top retrieved ['R0213', 'R0230', 'R0051']
-- Probable cause: expected record not in the top 8 retrieved
-- Fix: retrieval (query wording, model linking, ranking tiers)
+UNCONFIRMED (machine-checked only): expected answers drafted by Claude Code, source sentences verified verbatim by code, NOT yet confirmed by a human. Not part of any headline number. n = 17 (S2 only).
 
-### A-STAT-05 (status): false_refusal (VISIBLE)
-- Query: Is the comment period still open for the proposed AD on the 206L?
-- Expected: {"status": "answered", "expected_record_ids": ["R0044"], "required_fact_substrings": ["comment period CLOSED (closed 2026-10-26)"]}
-- Observed: needs_clarification AMBIGUOUS_MODEL; top retrieved []
-- Probable cause: gate AMBIGUOUS_MODEL fired on an answerable question
-- Fix: narrow that gate (keyword list, thresholds or linking)
-
-All S2 failures: 4 (3 silent). Full list in data/eval/results_detail.json.
+- Recall@5 94.1% (n=17); status accuracy 100.0% (n=17); engine per class {"APPLICABLE": {"accuracy": 0.9166666666666666, "n": 12}, "UNDETERMINED": {"accuracy": 0.0, "n": 1}}.
+- M-09: verdict_UNDETERMINED_as_APPLICABLE (SILENT); observed answered; cause: engine rule serial.none: model matches and no serial-number limitation is stated in the summary
+- M-17: record_missed (SILENT); observed answered; cause: expected record not in the top 8 retrieved
+- M-17: verdict_APPLICABLE_as_UNDETERMINED (VISIBLE); observed answered; cause: engine rule model.series_overlap: the record names the 737-900 series; the summary does not say whether 737-900ER belongs to it
 
 ## Limitations
 
@@ -113,24 +94,35 @@ All S2 failures: 4 (3 silent). Full list in data/eval/results_detail.json.
 - Answer-quality and unsupported-claim metrics need a working LLM key and a human audit; until then they are NOT MEASURED.
 - No user study and no measured time savings: any impact claim is an estimate, not a measurement.
 
-## Analyst notes (written after the single test run; nothing below changed the run or its numbers)
+## Analyst notes
 
-**Two of the four S2 "failures" are errors in my auto test labels, not system errors.**
-- **A-STAT-05:** I built the query from the first token of R0044's Model column, "206L". "206L" is a family with variants (206L-1, -3, -4), so the system correctly asked for clarification (AMBIGUOUS_MODEL). The expected label "answered" is wrong.
-- **A-SER-03:** I asserted that every record listing A330-341 says only "certain" airplanes, without checking. R0061 and R0046 list A330-341 with no qualifier, so APPLICABLE is the correct verdict and no APPLICABILITY_UNDETERMINED refusal was due.
+### v2 run: the test split is NOT clean any more (read this first)
 
-The test split is frozen, so the labels were not edited and the run was not repeated. Correcting both labels in a v2 freeze would move S2 to 0 false refusals and 0 missed refusals on this split, but that is not a measured result.
+v1 (frozen 2026-10-31T07:14) was run once on the test split and its failures were read. The v2 fixes below were motivated by those test failures, so **v2 test numbers are contaminated: they are an optimistic re-test, not an unbiased held-out estimate.** No threshold was tuned on test (dev tuning re-ran and kept 0.62 / 0.90), but which bugs got fixed was chosen by looking at test failures. A clean estimate needs new held-out cases (e.g. the 24 manual cases once a human confirms them, since none of them were used to choose fixes).
 
-**Two failures are real and SILENT: A-SUP-01 and A-SUP-06 (supersession lookups by AD number).**
-- "Which proposal would supersede AD 2026-09-02?": BM25 ranks R0002 first (B1 retrieves it at rank 1). Hybrid RRF drops it out of the top 8 entirely: a record ranked first by one signal only (1/61) loses to records ranked middling by both. The user gets an answer about other proposals, with no warning.
-- **Fix (not applied; it would be tuned on dev and re-frozen):** guarantee BM25 rank-1 hits on exact identifier tokens (AD numbers, dockets, designators) a place in the fused list, or add an exact-identifier tier like the model-match tier.
+What changed between v1 and v2, and why:
+- **Label fixes (my construction errors, not system changes).** A-STAT cases now use the most specific listed model (v1 used "206L", a family, so the system correctly asked for clarification). A-SER cases are now selected by a rule over the raw text (every listing record says "certain", none says "all" or mentions serials), replacing my hand-picked A330-341, which records R0046/R0061 apply to.
+- **Exact-identifier tier in retrieval (system fix for the two SILENT v1 failures A-SUP-01/06).** A record containing an AD number or docket typed in the query now ranks first within its model tier (BM25 and hybrid modes only; the dense-only baseline is unchanged). The test split was not used to tune it; it is a rule, with regression tests on the two failing queries.
+- **Make-name ambiguity in the spreadsheet.** Renames and spelling variants of one legal entity are merged (e.g. "Embraer S.A." -> "Embraer", "Eurocopter France" -> "Airbus Helicopters", "Bell Helicopter Textron" -> "Bell Textron, Inc."); distinct legal entities of one manufacturer share a make family (Gulfstream, Rolls-Royce, Pratt & Whitney, Bell, Textron Aviation/Cessna). Reasons per name in docs/make_audit.md.
+- **Out-of-scope gate.** "Which proposed AD addresses loss of torque on ...?" is a lookup and is no longer refused (manual case M-01 would have been a false refusal); "What torque value / which P/N should I order" is still refused.
+- **Verifier grounding.** Spelled-out numbers ("three inspections") are now grounded like digits; "the existing AD requires ..." is treated like "AD 2024-05-13 requires ..." (a description of the superseded final AD, not a mandate claim).
+
+### v2 result in one line
+
+S2 on the 44 auto test cases: 0 failures flagged; refusal F1 1.0 and status accuracy 1.0 (n = 35), Recall@5 83.3% (n = 18, v1 72.2%). Contaminated as explained above.
+
+**The three remaining S2 Recall@5 misses are label limits, not clear errors, and I did not relabel them after seeing test.** A-LOOK-01 (402C) and A-EMPTY-01/03 (EMB-120) expect only the records whose sparse Model column lists the aircraft. S2 ranks first other records that also concern it by Subject Heading (e.g. R0397 "Cessna Aircraft Company Models 402C and 414A", R0351/R0431 "EMBRAER Model EMB-120"), and the expected record comes in at rank 6 or 7, inside the top 8 shown to the user. Recall@5 counts these as misses. A fair label would list every record whose heading or summary names the model, and that needs a human.
+
+**Unconfirmed manual cases (17 on the test split, reported separately in EVAL.md):** two SILENT failures are worth the user's attention. M-09: the engine says APPLICABLE for a 206L-4 when the summary limits the proposal to helicopters with a given STC (the engine has no STC rule). M-17: "737-900ER" is not matched to the record that lists the 737-900 series (shown as UNDETERMINED, which is visible), and the record also fell out of the top 8.
+
+### Still true from v1
 
 **Too good to be true:**
-- **B1 BM25 Recall@5 = 100% (n = 18).** Auto lookup and supersession queries contain the exact model or AD token, which is where keyword search is strongest. This is a property of auto-generated queries, not evidence that keyword search is enough. Manual paraphrase cases (pending review) are designed to test this.
-- **Engine accuracy 100% (n = 7).** Expected verdicts come from the same Model column the engine reads (circular), and n is tiny. The known engine weaknesses (STC-conditional applicability in R0044, the "900ER" typo in R0155) are in the manual cases, which are pending.
+- **B1 BM25 Recall@5 is high** because auto lookup and supersession queries contain the exact model or AD token, which is where keyword search is strongest. This is a property of auto-generated queries, not evidence that keyword search is enough. Manual paraphrase cases (pending review) are designed to test this.
+- **Engine accuracy** on auto cases: expected verdicts come from the same Model column the engine reads (circular), and n is tiny. The known engine weaknesses (STC-conditional applicability in R0044, the "900ER" typo in R0155) are in the manual cases, which are pending human review.
 - **Dev tuning F1 = 1.0** on 22 dev cases, with 24 of 54 threshold settings tied. The dev split cannot separate them; the previous placeholders (0.62 / 0.90) were kept by the tie-break rule.
 
-**Not measured in this run (no valid API key):**
-- Every S0/S1/S2 answer was extractive (answer modes: extractive_fallback or none), so S0, S1 and S2 differ here only by engine and gates.
-- Answer-quality layer rates, the human-audited unsupported-claim rate and the LLM judge are therefore NOT MEASURED. claim_audit.csv has no rows.
+**Not measured (no valid API key in data/.env):**
+- Every S0/S1/S2 answer was extractive, so S0, S1 and S2 differ here only by engine and gates.
+- Answer-quality layer rates, the human-audited unsupported-claim rate and the LLM judge are NOT MEASURED. claim_audit.csv has no rows.
 - Latency and $0 cost exclude LLM calls.

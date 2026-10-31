@@ -4,7 +4,9 @@ Rules (Prompt 3, DECISIONS.md):
 - Raw makes whose normalised keys are equal are merged (lowercase, punctuation -> space, drop STOPWORDS).
 - Plain "Airbus" becomes "Airbus SAS" only on rows whose Subject Heading contains "Airbus SAS".
 - Airbus Helicopters* and Airbus Canada* never become Airbus SAS; McDonnell Douglas never becomes Boeing.
-- make_family = "Airbus" for every Airbus entity; otherwise family = canonical make.
+- Renames and spelling variants of the SAME legal entity are merged via EXPLICIT (reason logged per key).
+- make_family groups DISTINCT legal entities of one manufacturer (FAMILY_PREFIXES, e.g. all Airbus,
+  Gulfstream, Rolls-Royce, Pratt & Whitney, Bell, Textron Aviation/Cessna); otherwise family = canonical.
 - Cells listing several makes ("A | B") are split; each part is canonicalised separately.
 Everything else stays separate. Near-miss names are listed in docs/make_audit.md for human review.
 """
@@ -30,7 +32,44 @@ EXPLICIT: dict[str, tuple[str, str]] = {
         "Erickson Air-Crane Incorporated",
         'Same company; "DBA Erickson Air-Crane" is a trading-name suffix.',
     ),
+    # Data-ambiguity fixes (DECISIONS.md 149): same legal entity, different spelling or a later name.
+    "embraer s a": ("Embraer", '"Embraer S.A." is the legal form of "Embraer"; same TC holder.'),
+    "cessna aircraft": ("Cessna", '"Cessna Aircraft Company" and "Cessna" are the same TC holder.'),
+    "piper": ("Piper Aircraft, Inc.", '"Piper" is the short form of "Piper Aircraft, Inc.".'),
+    "bell helicopter textron": ("Bell Textron, Inc.", "Bell Helicopter Textron Inc. was renamed Bell Textron Inc."),
+    "bell helicopter textron canada": (
+        "Bell Textron Canada Limited",
+        "Bell Helicopter Textron Canada Limited was renamed Bell Textron Canada Limited.",
+    ),
+    "pratt whitney division": ("Pratt & Whitney", '"Pratt & Whitney Division" is the same US TC holder.'),
+    "pratt whitney rtx formerly united technologies": (
+        "Pratt & Whitney",
+        "Same US TC holder; the cell spells out the parent company (RTX, formerly United Technologies).",
+    ),
+    "general electric ge aerospace": (
+        "General Electric Company",
+        '"GE Aerospace" is the trading name of General Electric Company.',
+    ),
+    "eurocopter france": ("Airbus Helicopters", "Eurocopter France was renamed Airbus Helicopters (2014)."),
+    "eurocopter deutschland gmbh": (
+        "Airbus Helicopters Deutschland GmbH",
+        "Eurocopter Deutschland GmbH was renamed Airbus Helicopters Deutschland GmbH (2014).",
+    ),
 }
+
+# Normalised-key prefix -> family. Distinct legal entities of one manufacturer share a family (not merged):
+# the engine treats a same-family make as "same" and lets the model check decide.
+FAMILY_PREFIXES: tuple[tuple[str, str], ...] = (
+    ("airbus", "Airbus"),
+    ("eurocopter", "Airbus"),
+    ("gulfstream", "Gulfstream"),
+    ("rolls royce", "Rolls-Royce"),
+    ("pratt whitney", "Pratt & Whitney"),
+    ("bell textron", "Bell"),
+    ("cessna", "Textron Aviation"),
+    ("textron aviation", "Textron Aviation"),
+    ("bae systems", "BAE Systems"),
+)
 
 AIRBUS_PLAIN_KEY = "airbus"
 AIRBUS_SAS = "Airbus SAS"
@@ -59,7 +98,11 @@ def split_makes(cell: str | None) -> list[str]:
 
 
 def make_family(canonical: str) -> str:
-    return "Airbus" if canonical.lower().startswith("airbus") else canonical
+    key = normalise_key(canonical)
+    for prefix, family in FAMILY_PREFIXES:
+        if key == prefix or key.startswith(prefix + " "):
+            return family
+    return canonical
 
 
 @dataclass(frozen=True)
@@ -132,6 +175,6 @@ def candidate_merges(alias: dict[str, AliasEntry]) -> list[tuple[str, str]]:
     pairs: list[tuple[str, str]] = []
     for i, (a, ka) in enumerate(canon_keys):
         for b, kb in canon_keys[i + 1 :]:
-            if ka.split()[:1] == kb.split()[:1] and make_family(a) != "Airbus":
+            if ka.split()[:1] == kb.split()[:1] and make_family(a) != make_family(b):
                 pairs.append((a, b))
     return pairs

@@ -253,6 +253,22 @@ def test_out_of_scope_torque(syn: Linker) -> None:
     assert d.reason_code == "OUT_OF_SCOPE" and d.details["kind"] == "numeric_spec" and "torque" in d.message
 
 
+@pytest.mark.parametrize(
+    ("text", "oos"),
+    [
+        ("Which proposed AD addresses loss of tightening torque on main rotor servo-controls for our AS355F1?", False),
+        ("Any ADs about torque loss on the AS355?", False),
+        ("What torque value does the proposed AD require for the A330?", True),
+        ("What is the part number of the replacement RMP for the A330-243?", True),
+        ("Which P/N should I order for the H160-B window ropes?", True),
+    ],
+)
+def test_out_of_scope_lookup_vs_procedure(text: str, oos: bool) -> None:
+    from backend.app.pipeline.checks import detect_out_of_scope
+
+    assert detect_out_of_scope(text, None).triggered is oos
+
+
 def test_out_of_scope_parser_flag_legal(syn: Linker) -> None:
     d, _ = run("Am I covered if we skip it?", P(asks_out_of_scope=True, out_of_scope_kind="legal"), syn)
     assert d.reason_code == "OUT_OF_SCOPE" and "legal advice" in d.message

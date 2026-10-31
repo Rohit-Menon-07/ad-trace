@@ -13,6 +13,7 @@ from backend.app.ingest.loader import EXPECTED_COLUMNS, raw_name, row_hash
 from backend.app.ingest.makes import (
     AIRBUS_SAS,
     build_alias_map,
+    candidate_merges,
     canonicalise,
     check_never_merge,
     make_family,
@@ -111,7 +112,21 @@ def test_boeing_merged_mcdonnell_separate(alias) -> None:
 def test_normalised_spellings_merge_to_most_frequent(alias) -> None:
     assert alias["Bombardier, Inc."].canonical == "Bombardier Inc."
     assert alias["Leonardo S.p.A."].canonical == "Leonardo S.p.a."
-    assert alias["Embraer S.A."].canonical == "Embraer S.A."  # S.A. is not a stopword: kept separate
+    assert alias["Embraer S.A."].canonical == "Embraer"  # explicit rule: legal form of the same TC holder
+
+
+def test_renamed_entities_merge_and_distinct_entities_share_family() -> None:
+    names = Counter({"Eurocopter France": 4, "Airbus Helicopters": 17, "Bell Helicopter Textron": 4,
+                     "Bell Textron, Inc.": 1, "Gulfstream Aerospace LP": 8, "Gulfstream Aerospace Corporation": 8,
+                     "Scotts-Bell 47 Inc.": 1, "Cessna Aircraft Company": 3, "Textron Aviation Inc.": 3})  # fmt: skip
+    a = build_alias_map(names)
+    assert a["Eurocopter France"].canonical == "Airbus Helicopters" and a["Eurocopter France"].family == "Airbus"
+    assert a["Bell Helicopter Textron"].canonical == "Bell Textron, Inc."
+    lp, corp = a["Gulfstream Aerospace LP"], a["Gulfstream Aerospace Corporation"]
+    assert lp.canonical != corp.canonical and lp.family == corp.family == "Gulfstream"
+    assert a["Scotts-Bell 47 Inc."].family == "Scotts-Bell 47 Inc."  # different company, no shared family
+    assert a["Cessna Aircraft Company"].family == a["Textron Aviation Inc."].family == "Textron Aviation"
+    assert candidate_merges(a) == []  # same-family pairs are not listed as candidate merges
 
 
 def test_airbus_conditional_on_subject_heading(alias) -> None:
@@ -147,6 +162,8 @@ def test_multi_make_cell_is_split(alias) -> None:
 def test_make_family() -> None:
     assert make_family("Airbus Canada Limited Partnership") == "Airbus"
     assert make_family("Embraer") == "Embraer"
+    assert make_family("Rolls-Royce plc") == make_family("Rolls-Royce Corporation") == "Rolls-Royce"
+    assert make_family("Pratt & Whitney Canada Corp.") == "Pratt & Whitney"
 
 
 # ---- duplicate-docket classification ----

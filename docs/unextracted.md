@@ -42,13 +42,13 @@ model list extracted, by notice kind:
 | R0271 | FAA-2011-0033 | Dowty Propellers | proposal/other | summary says "products listed above" | We propose to adopt a new airworthiness directive (AD) for the products listed above. This proposed AD results |
 | R0272 | FAA-2011-0254 | The Boeing Company | proposal/other | summary says "products listed above" | We propose to adopt a new airworthiness directive (AD) for the products listed above. For certain airplanes, t |
 | R0273 | FAA-2011-0222 | Dassault Aviation | proposal/other | summary says "products listed above" | We propose to adopt a new airworthiness directive (AD) for the products listed above. This proposed AD results |
-| R0276 | FAA-2011-0449 | Bell Helicopter Textron Canada Limited | proposal/other | no 'Model' phrase in summary | We propose to adopt a new airworthiness directive (AD) for the specified Bell model helicopters. This proposed |
+| R0276 | FAA-2011-0449 | Bell Textron Canada Limited | proposal/other | no 'Model' phrase in summary | We propose to adopt a new airworthiness directive (AD) for the specified Bell model helicopters. This proposed |
 | R0286 | FAA-2009-1028 | Gulfstream Aerospace LP | proposal/other | summary says "products listed above" | We propose to adopt a new airworthiness directive (AD) for the products listed above. This proposed AD results |
 | R0289 | FAA-2007-0242 | General Electric Company | withdrawal notice | no 'Model' phrase in summary | This action withdraws a notice of proposed rulemaking (NPRM) that proposed a new airworthiness directive (AD), |
 | R0293 | FAA-2007-0242 | General Electric Company | proposal/other | no 'Model' phrase in summary | The FAA proposes to adopt a new airworthiness directive (AD) for General Electric Company (GE) CF6-80C2 and CF |
 | R0294 | 2000-NM-120-AD | Embraer | withdrawal notice | empty summary |  |
 | R0296 | FAA-2007-0373 | Erickson Air-Crane Incorporated | proposal/other | no 'Model' phrase in summary | This document proposes adopting a new airworthiness directive (AD) for the specified Erickson Air-Crane Incorp |
-| R0303 | FAA-2007-27495 | Eurocopter France | proposal/other | no 'Model' phrase in summary | This document proposes adopting a new airworthiness directive (AD) for the specified Eurocopter France (ECF) m |
+| R0303 | FAA-2007-27495 | Airbus Helicopters | proposal/other | no 'Model' phrase in summary | This document proposes adopting a new airworthiness directive (AD) for the specified Eurocopter France (ECF) m |
 | R0304 | FAA-2006-26691 | Reims Aviation S.A. | proposal/other | summary says "products listed above" | We propose to adopt a new airworthiness directive (AD) for the products listed above. This proposed AD results |
 | R0314 | FAA-2006-23739 | Embraer | proposal/other | no 'Model' phrase in summary | This amendment establishes, amends, suspends, or revokes Standard Instrument Approach Procedures (SIAPs) and/o |
 | R0321 | FAA-2004-19157 | Rolls-Royce Deutschland Ltd & Co KG | withdrawal notice | no 'Model' phrase in summary | This action withdraws a notice of proposed rulemaking (NPRM). That NPRM proposed a new airworthiness directive |
@@ -63,7 +63,7 @@ model list extracted, by notice kind:
 | R0385 | FAA-2003-16647 | McDonnell Douglas | proposal/other | no 'Model' phrase in summary | This document proposes the adoption of a new airworthiness directive (AD) that is applicable to certain McDonn |
 | R0386 | 86-ANE-12-AD | General Electric Company | withdrawal notice | no 'Model' phrase in summary | This action withdraws a notice of proposed rulemaking (NPRM) that proposed a new airworthiness directive (AD), |
 | R0393 | 2002-NM-306-AD | McDonnell Douglas | proposal/other | no 'Model' phrase in summary | This document proposes the supersedure of an existing airworthiness directive (AD), applicable to certain McDo |
-| R0407 | 2002-SW-31-AD | Bell Helicopter Textron | proposal/other | no 'Model' phrase in summary | This document proposes the supersedure of an existing airworthiness directive (AD) that applies to specified t |
+| R0407 | 2002-SW-31-AD | Bell Textron, Inc. | proposal/other | no 'Model' phrase in summary | This document proposes the supersedure of an existing airworthiness directive (AD) that applies to specified t |
 | R0408 | 2001-NM-152-AD | McDonnell Douglas | proposal/other | no 'Model' phrase in summary | This document proposes to revise an existing airworthiness directive (AD), applicable to certain McDonnell Dou |
 | R0409 | 2002-CE-27-AD-W | Mitsubishi Heavy Industries, Ltd. | withdrawal notice | no 'Model' phrase in summary | This document withdraws a notice of proposed rulemaking (NPRM) that would have applied to all Mitsubishi Heavy |
 | R0411 | 2000-SW-38-AD-W |  | withdrawal notice | no 'Model' phrase in summary | This action withdraws a notice of proposed rulemaking (NPRM) that proposed a new airworthiness directive (AD)  |

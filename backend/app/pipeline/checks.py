@@ -23,6 +23,21 @@ _OUT_OF_SCOPE = re.compile(
     r"|\blegal(?:ly)?\b|\bliab(?:le|ility)\b|\bsue\b|\blawsuit\b",
     re.IGNORECASE,
 )
+# Asking FOR a procedure, a value, an order or legal advice: out of scope even when a proposal is mentioned.
+_OUT_OF_SCOPE_STRONG = re.compile(
+    r"\b(?:what|which|how\s+much)\s+torque\b|\btorque\s+(?:value|setting|spec(?:ification)?)s?\b"
+    r"|\bshould\s+(?:i|we)\s+(?:apply|use|order|tighten|torque|install|replace|buy)\b"
+    r"|\b(?:what|which)\s+(?:is\s+the\s+)?(?:P/Ns?|part\s+numbers?)\b|\bpart\s+numbers?\s+(?:of|for)\b"
+    r"|how\s+(?:do|should|can)\s+(?:i|we)\s+comply|step[\s-]+by[\s-]+step"
+    r"|\blegal(?:ly)?\b|\bliab(?:le|ility)\b|\bsue\b|\blawsuit\b",
+    re.IGNORECASE,
+)
+# "Which proposed AD addresses loss of torque on ...?" asks which record exists: a lookup, in scope.
+_LOOKUP = re.compile(
+    r"\b(?:which|what|is\s+there|are\s+there|any|does|do)\b[^?.]{0,80}"
+    r"\b(?:proposals?|proposed\s+ADs?|NPRMs?|notices?|ADs?)\b",
+    re.IGNORECASE,
+)
 # "What does the proposal say/require about X?" is a question about the record itself: in scope.
 _ABOUT_PROPOSAL = re.compile(
     r"\b(?:what|which|does|do|is|are)\b[^?.]{0,60}\b(?:proposal|proposed\s+AD|NPRM|notice|summary|record)s?\b"
@@ -55,8 +70,11 @@ def detect_out_of_scope(text: str, parsed: Any) -> Flag:
     kind = getattr(parsed, "out_of_scope_kind", None) if parser_flag else None
     if not hits and not parser_flag:
         return Flag(False)
-    if _ABOUT_PROPOSAL.search(text or ""):
+    strong = _OUT_OF_SCOPE_STRONG.search(text or "") is not None
+    if not strong and _ABOUT_PROPOSAL.search(text or ""):
         return Flag(False, ["asks what the proposal itself says: in scope"], None)
+    if not strong and hits and not parser_flag and _LOOKUP.search(text or ""):
+        return Flag(False, ["asks which proposal exists (lookup), not for a procedure or value: in scope"], None)
     reasons = ([f"keywords: {', '.join(hits)}"] if hits else []) + (
         ["parser flagged out-of-scope"] if parser_flag else []
     )

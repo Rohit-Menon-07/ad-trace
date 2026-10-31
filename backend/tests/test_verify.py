@@ -21,8 +21,11 @@ from backend.app.llm.client import LLMClient, LLMError
 from backend.app.pipeline.generate import ClaimOut, PackRecord, SentenceIn, SubmitAnswer, build_pack
 from backend.app.pipeline.verify import (
     PROMPT_PATH,
+    Haystack,
     extract_entities,
+    mandate_problem,
     norm_quote,
+    number_words,
     to_api_claims,
     verify,
 )
@@ -343,6 +346,19 @@ def test_entity_extraction() -> None:
     assert {"2024-05-13", "2026-12-03", "2024-12-09"} <= e.codes
     assert e.dockets == {"FAA-2022-1308R1"} and {"A330-243", "PW4090"} <= e.designators and "-243F" in e.suffixes
     assert {"1234", "3.98"} <= e.numbers
+
+
+def test_number_words_are_grounded_like_digits() -> None:
+    assert number_words("three inspections, twenty-five hours, Twelve sites, one of them") == {"3", "25", "12"}
+    hay = Haystack.build(["The proposed AD would require 3 inspections."], [], [])
+    assert hay.missing(extract_entities("It would require three inspections.")) == []
+    assert hay.missing(extract_entities("It would require four inspections.")) == ["number 4"]
+
+
+def test_existing_ad_without_number_may_state_requirements() -> None:
+    assert mandate_problem("The existing AD requires repetitive inspections.") is None
+    assert mandate_problem("That AD requires revising the AFM.") is None
+    assert mandate_problem("Operators must inspect the RMP.") is not None
 
 
 def test_norm_quote() -> None:

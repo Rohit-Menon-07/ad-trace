@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-10-31T07:14:32.550384+00:00",
+  "generated_at": "2026-10-31T07:47:59.717800+00:00",
   "freeze": {
-    "cases_sha256": "50ccd6b403ec9e223b3101a06f49e6454e8df397d9f96e4821c60f1a53d04de4",
+    "cases_sha256": "7137627d075c2f67a85b2004dee9f07619d49329e2f950922982f68f57dfd721",
     "manual_decisions_sha256": "da41e379b354c61b675274af3fae92d35c0f769fe531cdffb72b312eadd429d4",
-    "config_sha256": "94c4c6bdbd3af1a25dd808278c4a8dc613da394158e1ee0ac223600ac9acc13b",
+    "config_sha256": "7b54558e4187c62acd6f4e6b426853dbf97a35e7db84112da79a19ff6c531aa4",
     "thresholds": {
       "min_top_cosine": 0.62,
       "min_top_bm25_norm": 0.9
     },
-    "frozen_at": "2026-10-31T07:14:21.679434+00:00",
+    "frozen_at": "2026-10-31T07:47:47.841797+00:00",
     "manual_confirmed": 0
   },
   "config_changed_since_freeze": false,
@@ -82,11 +82,11 @@
         "note": "NOT MEASURED: no answer was written by the model (generation fell back to extractive or was off)."
       },
       "latency": {
-        "p50_retrieval_ms": 5.09,
-        "p95_retrieval_ms": 7.579,
+        "p50_retrieval_ms": 6.135,
+        "p95_retrieval_ms": 15.4575,
         "n_retrieval": 44,
-        "p50_e2e_ms": 7.0,
-        "p95_e2e_ms": 10.0,
+        "p50_e2e_ms": 9.0,
+        "p95_e2e_ms": 18.0,
         "n_e2e": 44,
         "cost_per_query": 0.0
       },
@@ -102,10 +102,10 @@
         0.3888888888888889,
         0.8333333333333334
       ],
-      "mrr": 0.47275132275132276,
+      "mrr": 0.4681216931216931,
       "mrr_ci": [
-        0.2843320105820106,
-        0.673313492063492
+        0.27879960317460317,
+        0.6719907407407407
       ],
       "n_retrieval_cases": 18,
       "status_accuracy": 0.45714285714285713,
@@ -140,11 +140,11 @@
         "note": "NOT MEASURED: no answer was written by the model (generation fell back to extractive or was off)."
       },
       "latency": {
-        "p50_retrieval_ms": 8.620000000000001,
-        "p95_retrieval_ms": 10.684999999999999,
+        "p50_retrieval_ms": 8.465,
+        "p95_retrieval_ms": 11.235000000000001,
         "n_retrieval": 44,
         "p50_e2e_ms": 11.0,
-        "p95_e2e_ms": 13.0,
+        "p95_e2e_ms": 13.850000000000001,
         "n_e2e": 44,
         "cost_per_query": 0.0
       },
@@ -154,15 +154,15 @@
     },
     "B3": {
       "label": "B3 hybrid + extractive (no LLM, no engine)",
-      "recall_at_5": 0.7777777777777778,
+      "recall_at_5": 0.8888888888888888,
       "recall_at_5_ci": [
-        0.5555555555555556,
-        0.9444444444444444
+        0.7222222222222222,
+        1.0
       ],
-      "mrr": 0.7777777777777778,
+      "mrr": 0.8888888888888888,
       "mrr_ci": [
-        0.5555555555555556,
-        0.9444444444444444
+        0.7222222222222222,
+        1.0
       ],
       "n_retrieval_cases": 18,
       "status_accuracy": 0.45714285714285713,
@@ -197,11 +197,11 @@
         "note": "NOT MEASURED: no answer was written by the model (generation fell back to extractive or was off)."
       },
       "latency": {
-        "p50_retrieval_ms": 15.235,
-        "p95_retrieval_ms": 18.2585,
+        "p50_retrieval_ms": 16.52,
+        "p95_retrieval_ms": 26.653,
         "n_retrieval": 44,
-        "p50_e2e_ms": 18.0,
-        "p95_e2e_ms": 21.0,
+        "p50_e2e_ms": 19.5,
+        "p95_e2e_ms": 30.0,
         "n_e2e": 44,
         "cost_per_query": 0.0
       },
@@ -211,15 +211,15 @@
     },
     "S0": {
       "label": "S0 hybrid + generation, no verification, no engine (naive RAG)",
-      "recall_at_5": 0.7777777777777778,
+      "recall_at_5": 0.8888888888888888,
       "recall_at_5_ci": [
-        0.5555555555555556,
-        0.9444444444444444
+        0.7222222222222222,
+        1.0
       ],
-      "mrr": 0.7777777777777778,
+      "mrr": 0.8888888888888888,
       "mrr_ci": [
-        0.5555555555555556,
-        0.9444444444444444
+        0.7222222222222222,
+        1.0
       ],
       "n_retrieval_cases": 18,
       "status_accuracy": 0.45714285714285713,
@@ -254,11 +254,11 @@
         "note": "NOT MEASURED: no answer was written by the model (generation fell back to extractive or was off)."
       },
       "latency": {
-        "p50_retrieval_ms": 15.385,
-        "p95_retrieval_ms": 18.826999999999998,
+        "p50_retrieval_ms": 17.009999999999998,
+        "p95_retrieval_ms": 26.351,
         "n_retrieval": 44,
-        "p50_e2e_ms": 19.0,
-        "p95_e2e_ms": 22.0,
+        "p50_e2e_ms": 20.5,
+        "p95_e2e_ms": 30.0,
         "n_e2e": 44,
         "cost_per_query": 0.0
       },
@@ -268,15 +268,15 @@
     },
     "S1": {
       "label": "S1 = S0 + quote and grounding checks",
-      "recall_at_5": 0.7777777777777778,
+      "recall_at_5": 0.8888888888888888,
       "recall_at_5_ci": [
-        0.5555555555555556,
-        0.9444444444444444
+        0.7222222222222222,
+        1.0
       ],
-      "mrr": 0.7777777777777778,
+      "mrr": 0.8888888888888888,
       "mrr_ci": [
-        0.5555555555555556,
-        0.9444444444444444
+        0.7222222222222222,
+        1.0
       ],
       "n_retrieval_cases": 18,
       "status_accuracy": 0.45714285714285713,
@@ -311,11 +311,11 @@
         "note": "NOT MEASURED: no answer was written by the model (generation fell back to extractive or was off)."
       },
       "latency": {
-        "p50_retrieval_ms": 14.870000000000001,
-        "p95_retrieval_ms": 18.950000000000003,
+        "p50_retrieval_ms": 16.455,
+        "p95_retrieval_ms": 26.078500000000002,
         "n_retrieval": 44,
-        "p50_e2e_ms": 18.5,
-        "p95_e2e_ms": 22.85,
+        "p50_e2e_ms": 20.0,
+        "p95_e2e_ms": 30.0,
         "n_e2e": 44,
         "cost_per_query": 0.0
       },
@@ -325,48 +325,41 @@
     },
     "S2": {
       "label": "S2 full system: engine, gates, clarification, generation, all verification layers",
-      "recall_at_5": 0.7222222222222222,
+      "recall_at_5": 0.8333333333333334,
       "recall_at_5_ci": [
-        0.5,
-        0.8888888888888888
+        0.6111111111111112,
+        1.0
       ],
-      "mrr": 0.7380952380952381,
+      "mrr": 0.8584656084656085,
       "mrr_ci": [
-        0.5238095238095238,
-        0.9047619047619047
+        0.671957671957672,
+        1.0
       ],
       "n_retrieval_cases": 18,
-      "status_accuracy": 0.9428571428571428,
+      "status_accuracy": 1.0,
       "status_accuracy_ci": [
-        0.8571428571428571,
+        1.0,
         1.0
       ],
       "n_status_cases": 35,
-      "fact_hit_rate": 0.6666666666666666,
+      "fact_hit_rate": 1.0,
       "n_fact_cases": 9,
       "refusal": {
-        "precision": 0.9473684210526315,
-        "recall": 0.9473684210526315,
-        "f1": 0.9473684210526315,
-        "tp": 18,
-        "fp": 1,
-        "fn": 1,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 19,
+        "fp": 0,
+        "fn": 0,
         "n": 35,
         "f1_ci": [
-          0.8646718146718146,
+          1.0,
           1.0
         ],
         "reason_code_accuracy": 1.0,
-        "reason_code_n": 18,
-        "false_refusals": [
-          {
-            "id": "A-STAT-05",
-            "category": "status",
-            "status": "needs_clarification",
-            "reason": "AMBIGUOUS_MODEL"
-          }
-        ],
-        "false_refusal_rate": 0.0625,
+        "reason_code_n": 19,
+        "false_refusals": [],
+        "false_refusal_rate": 0.0,
         "false_refusal_n": 16
       },
       "answer_quality": {
@@ -375,11 +368,11 @@
         "note": "NOT MEASURED: no answer was written by the model (generation fell back to extractive or was off)."
       },
       "latency": {
-        "p50_retrieval_ms": 13.71,
-        "p95_retrieval_ms": 17.722,
-        "n_retrieval": 29,
+        "p50_retrieval_ms": 14.075,
+        "p95_retrieval_ms": 26.941,
+        "n_retrieval": 30,
         "p50_e2e_ms": 17.0,
-        "p95_e2e_ms": 23.85,
+        "p95_e2e_ms": 32.85,
         "n_e2e": 44,
         "cost_per_query": 0.0
       },
@@ -499,135 +492,55 @@
     "n": 7,
     "undetermined_by_rule": {}
   },
-  "failures": [
-    {
-      "id": "A-SER-03",
-      "category": "serial_unresolved",
-      "kind": "missed_refusal",
-      "severity": 3,
-      "visible": false,
-      "query": "Do the proposed ADs apply to our A330-341 serial 1234?",
-      "expected": {
-        "status": "refused",
-        "reason_code": "APPLICABILITY_UNDETERMINED",
-        "expected_record_ids": [],
-        "expected_verdicts": {},
-        "required_fact_substrings": []
-      },
-      "observed": {
-        "status": "answered",
-        "reason": null,
-        "retrieved": [
-          "R0061",
-          "R0046",
-          "R0037",
-          "R0011",
-          "R0021"
-        ]
-      },
-      "cause": "no gate fired; expected APPLICABILITY_UNDETERMINED",
-      "fix": "add or widen the gate for this pattern"
-    },
-    {
-      "id": "A-SUP-01",
-      "category": "supersession",
-      "kind": "record_missed",
-      "severity": 3,
-      "visible": false,
-      "query": "Which proposal would supersede AD 2026-09-02?",
-      "expected": {
-        "status": "answered",
-        "reason_code": null,
-        "expected_record_ids": [
-          "R0002"
-        ],
-        "expected_verdicts": {},
-        "required_fact_substrings": [
-          "would supersede AD 2026-09-02"
-        ]
-      },
-      "observed": {
-        "status": "answered",
-        "reason": null,
-        "retrieved": [
-          "R0051",
-          "R0005",
-          "R0149",
-          "R0146",
-          "R0077"
-        ]
-      },
-      "cause": "expected record not in the top 8 retrieved",
-      "fix": "retrieval (query wording, model linking, ranking tiers)"
-    },
-    {
-      "id": "A-SUP-06",
-      "category": "supersession",
-      "kind": "record_missed",
-      "severity": 3,
-      "visible": false,
-      "query": "Which proposal would supersede AD 2015-07-03?",
-      "expected": {
-        "status": "answered",
-        "reason_code": null,
-        "expected_record_ids": [
-          "R0027"
-        ],
-        "expected_verdicts": {},
-        "required_fact_substrings": [
-          "would supersede AD 2015-07-03"
-        ]
-      },
-      "observed": {
-        "status": "answered",
-        "reason": null,
-        "retrieved": [
-          "R0213",
-          "R0230",
-          "R0051",
-          "R0056",
-          "R0005"
-        ]
-      },
-      "cause": "expected record not in the top 8 retrieved",
-      "fix": "retrieval (query wording, model linking, ranking tiers)"
-    },
-    {
-      "id": "A-STAT-05",
-      "category": "status",
-      "kind": "false_refusal",
-      "severity": 1,
-      "visible": true,
-      "query": "Is the comment period still open for the proposed AD on the 206L?",
-      "expected": {
-        "status": "answered",
-        "reason_code": null,
-        "expected_record_ids": [
-          "R0044"
-        ],
-        "expected_verdicts": {},
-        "required_fact_substrings": [
-          "comment period CLOSED (closed 2026-10-26)"
-        ]
-      },
-      "observed": {
-        "status": "needs_clarification",
-        "reason": "AMBIGUOUS_MODEL",
-        "retrieved": []
-      },
-      "cause": "gate AMBIGUOUS_MODEL fired on an answerable question",
-      "fix": "narrow that gate (keyword list, thresholds or linking)"
-    }
-  ],
-  "worst5": [
-    "A-SER-03:missed_refusal",
-    "A-SUP-01:record_missed",
-    "A-STAT-05:false_refusal",
-    "A-SUP-06:record_missed"
-  ],
+  "failures": [],
+  "worst5": [],
   "claim_audit_rows": 0,
   "llm_judge": {
     "run": false,
     "note": "LLM judge NOT RUN: no valid API key."
+  },
+  "unconfirmed_manual": {
+    "n": 17,
+    "label": "UNCONFIRMED (machine-checked only): expected answers drafted by Claude Code, source sentences verified verbatim by code, NOT yet confirmed by a human. Not part of any headline number.",
+    "recall_at_5": 0.9411764705882353,
+    "n_retrieval_cases": 17,
+    "status_accuracy": 1.0,
+    "n_status_cases": 17,
+    "engine": {
+      "APPLICABLE": {
+        "accuracy": 0.9166666666666666,
+        "n": 12
+      },
+      "UNDETERMINED": {
+        "accuracy": 0.0,
+        "n": 1
+      }
+    },
+    "failures": [
+      {
+        "id": "M-09",
+        "kind": "verdict_UNDETERMINED_as_APPLICABLE",
+        "visible": false,
+        "query": "Does the tail boom vibration proposal apply to our Bell 206L-4?",
+        "observed": "answered",
+        "cause": "engine rule serial.none: model matches and no serial-number limitation is stated in the summary"
+      },
+      {
+        "id": "M-17",
+        "kind": "record_missed",
+        "visible": false,
+        "query": "Does the PSU video monitor proposal apply to the 737-900ER?",
+        "observed": "answered",
+        "cause": "expected record not in the top 8 retrieved"
+      },
+      {
+        "id": "M-17",
+        "kind": "verdict_APPLICABLE_as_UNDETERMINED",
+        "visible": true,
+        "query": "Does the PSU video monitor proposal apply to the 737-900ER?",
+        "observed": "answered",
+        "cause": "engine rule model.series_overlap: the record names the 737-900 series; the summary does not say whether 737-900ER belongs to it"
+      }
+    ]
   }
 }

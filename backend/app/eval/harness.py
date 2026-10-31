@@ -264,8 +264,11 @@ def engine_eval(pipe: Pipeline, cases: list[dict[str, Any]]) -> dict[str, Any]:
         for rid, expected in c["expected"]["expected_verdicts"].items():
             cfg = c["config"]
             norm = norm_model(cfg["model"]) if cfg["model"] else None
+            # Same make linking as the pipeline (a case may spell a make that ingest now merges).
+            ml = pipe.linker.link_make(cfg["make"], "ui")
+            make = ml.canonical if ml.status == "accepted" else cfg["make"]
             lc = LinkedConfig(
-                cfg["make"], norm, family(norm) if norm else None, cfg["serial"], date.fromisoformat(cfg["as_of"])
+                make, norm, family(norm) if norm else None, cfg["serial"], date.fromisoformat(cfg["as_of"])
             )
             a = evaluate(lc, pipe.retriever.engine.records[rid])
             confusion[expected][a.verdict] += 1
@@ -641,6 +644,15 @@ def run_test() -> dict[str, Any]:
     metrics = {s.key: system_metrics(cases, runs[s.key]) for s in syss}
     eng = engine_eval(pipe, cases)
     fails = failures(cases, runs["S2"], eng)
+    # Manual test cases a human has NOT confirmed yet: run on S2 and reported separately, never in a headline.
+    decisions = manual_decisions()
+    unconf = [c for c in load_cases("test", include_unconfirmed_manual=True)
+              if c["provenance"] == "manual" and decisions.get(c["id"]) != "CONFIRMED"]  # fmt: skip
+    s2 = [s for s in syss if s.key == "S2"]
+    unconf_out = run_all(pipe, unconf, s2)["S2"] if unconf else []
+    unconf_metrics = system_metrics(unconf, unconf_out) if unconf else None
+    unconf_eng = engine_eval(pipe, unconf) if unconf else None
+    unconf_fails = failures(unconf, unconf_out, unconf_eng) if unconf_eng else []
     n_audit = write_claim_audit(runs, pipe.retriever.conn)
     judge = llm_judge(runs, pipe.retriever.conn, available and os.environ.get("LLM_MODE") != "fake")
     detail = {
@@ -676,6 +688,27 @@ def run_test() -> dict[str, Any]:
         "worst5": [f["case"]["id"] + ":" + f["kind"] for f in worst_by_category(fails)],
         "claim_audit_rows": n_audit,
         "llm_judge": judge,
+        "unconfirmed_manual": {
+            "n": len(unconf),
+            "label": "UNCONFIRMED (machine-checked only): expected answers drafted by Claude Code, source sentences "
+            "verified verbatim by code, NOT yet confirmed by a human. Not part of any headline number.",
+            "recall_at_5": unconf_metrics["recall_at_5"] if unconf_metrics else None,
+            "n_retrieval_cases": unconf_metrics["n_retrieval_cases"] if unconf_metrics else 0,
+            "status_accuracy": unconf_metrics["status_accuracy"] if unconf_metrics else None,
+            "n_status_cases": unconf_metrics["n_status_cases"] if unconf_metrics else 0,
+            "engine": unconf_eng["per_class"] if unconf_eng else None,
+            "failures": [
+                {
+                    "id": f["case"]["id"],
+                    "kind": f["kind"],
+                    "visible": f["visible"],
+                    "query": f["case"]["query"],
+                    "observed": f"{f['out']['status']} {f['out']['reason_code'] or ''}".strip(),
+                    "cause": f["cause"],
+                }
+                for f in unconf_fails
+            ],  # fmt: skip
+        },
     }
     DETAIL_PATH.write_text(json.dumps(detail, indent=2, default=str) + "\n", encoding="utf-8", newline="\n")
     results = to_results(detail, worst_by_category(fails))
@@ -796,7 +829,8 @@ def eval_md(d: dict[str, Any], worst: list[dict[str, Any]]) -> str:
         f"- **Test cases: n = {d['n_test_cases']}** {d['categories']}; provenance {d['provenance']}.",
         f"- **Manual cases: {d['manual_pending']} drafted cases are AWAITING HUMAN REVIEW** "
         "(data/eval/manual_review.md) "
-        "and are NOT included. Every number below comes from AUTO cases only.",
+        "and are NOT included in any headline number below (they appear only in the separately labelled "
+        "UNCONFIRMED section).",
         "- **Circularity caveat:** auto cases are generated from structured fields (Model column, raw summary text, "
         "raw dates). They test the pipeline, not extraction quality. "
         "Model-applicability auto cases are partly circular: "
@@ -920,6 +954,22 @@ def eval_md(d: dict[str, Any], worst: list[dict[str, Any]]) -> str:
         ]
     n_silent = sum(1 for f in d["failures"] if not f["visible"])
     L += [f"All S2 failures: {len(d['failures'])} ({n_silent} silent). Full list in data/eval/results_detail.json.", ""]
+    um = d.get("unconfirmed_manual")
+    if um and um["n"]:
+        L += [
+            "## UNCONFIRMED manual cases (machine-checked only; NOT in any number above)",
+            "",
+            f"{um['label']} n = {um['n']} (S2 only).",
+            "",
+            f"- Recall@5 {_f(um['recall_at_5'])} (n={um['n_retrieval_cases']}); status accuracy "
+            f"{_f(um['status_accuracy'])} (n={um['n_status_cases']}); engine per class {json.dumps(um['engine'])}.",
+        ]
+        L += [
+            f"- {f['id']}: {f['kind']} ({'VISIBLE' if f['visible'] else 'SILENT'}); observed {f['observed']}; "
+            f"cause: {f['cause']}"
+            for f in um["failures"]
+        ] or ["- No failures on these cases."]
+        L += [""]
     L += [
         "## Limitations",
         "",

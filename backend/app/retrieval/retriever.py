@@ -9,6 +9,7 @@ match. Every removal is reported (record ids + reason) for the "excluded" panel 
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 import time
 from collections import defaultdict
@@ -31,6 +32,16 @@ Mode = Literal["bm25", "dense", "hybrid"]
 APPLICABILITY_FIELDS = {"model", "applies_all_of_family", "qualifier_certain", "serial_range", "serial_list",
                         "applicability_defined_by_service_info"}  # fmt: skip
 SUPERSESSION_FIELDS = {"supersedes_ad", "continues_ad"}
+# Exact identifiers in a query (AD numbers, FAA dockets). Spaces around hyphens tolerated ("AD 2024- 05-13").
+RX_QUERY_ID = re.compile(
+    r"(?<![\w-])\d{4}\s?-\s?\d{2}\s?-\s?\d{2,3}(?![\w-])|\bFAA[\s-]?\d{4}-\d{3,5}(?:R\d+)?\b"
+    r"|\b\d{2,4}-[A-Z]{2,3}-\d{1,3}-AD\b",
+    re.IGNORECASE,
+)
+
+
+def norm_identifier(text: str) -> str:
+    return re.sub(r"\s*-\s*", "-", re.sub(r"^FAA\s", "FAA-", text.strip(), flags=re.IGNORECASE)).upper()
 
 
 @dataclass(frozen=True)
@@ -65,7 +76,7 @@ class SentenceHit:
     bm25_rank: int | None
     dense_rank: int | None
     fused: float
-    tags: list[str] = field(default_factory=list)  # top | applicability | supersession | heading
+    tags: list[str] = field(default_factory=list)  # top | identifier | applicability | supersession | heading
     local: float = 0.0  # within-record relevance: RRF of sentence-text-only BM25 and cosine (evidence ranking)
 
 
@@ -114,6 +125,11 @@ class Retriever:
                 "SELECT id, issue_date, is_duplicate, subject_heading FROM records"
             )
         }
+        # Record-level identifiers: docket and AD Number columns (sentence text is searched per query).
+        self.record_ids: dict[str, set[str]] = {
+            rid: {norm_identifier(x) for x in (docket, ad) if x}
+            for rid, docket, ad in self.conn.execute("SELECT id, docket, ad_number FROM records")
+        }
         self.anchors: dict[str, dict[str, set[str]]] = defaultdict(
             lambda: {"applicability": set(), "supersession": set()}
         )
@@ -151,6 +167,21 @@ class Retriever:
                 tier = max(tier, 2)
             tiers[r] = tier
         return tiers
+
+    def identifier_hits(self, query: str, cands: set[str]) -> dict[str, list[str]]:
+        """record id -> sentence ids that contain an AD number / docket written in the query (exact, spacing-
+        tolerant). A record whose docket or AD Number column matches is included with no sentence."""
+        wanted = {re.sub(r"R\d+$", "", norm_identifier(m.group(0))) for m in RX_QUERY_ID.finditer(query or "")}
+        if not wanted:
+            return {}
+        # Whole-identifier match: "FAA-2026-1181" must not hit "FAA-2026-11814"; a docket matches its R<n> revisions.
+        rx = re.compile(r"(?<![\w-])(?:" + "|".join(map(re.escape, sorted(wanted))) + r")(?:R\d+)?(?![\w-])")
+        out: dict[str, list[str]] = {}
+        for rid in cands:
+            sids = [s for s in self.by_record.get(rid, ()) if rx.search(norm_identifier(self.sentences[s][1]))]
+            if sids or any(rx.fullmatch(x) for x in self.record_ids.get(rid, ())):
+                out[rid] = sids[:2]
+        return out
 
     def apply_filters(self, f: Filters) -> tuple[set[str], list[FilterReport]]:
         cands = set(self.meta)
@@ -248,7 +279,15 @@ class Retriever:
             units.sort(key=lambda t: (-t[0], t[1]))
             scored.append((units[0][0] + bonus * sum(s for s, _ in units[1:3]), rid))
         tiers = self.match_tiers(filters, cands)
-        scored.sort(key=lambda t: (tiers.get(t[1], 0), -t[0], t[1]))
+        # Lexical modes only: a record containing an AD number / docket typed in the query ranks first within its
+        # model tier (fusion alone can bury an exact BM25 hit under semantically similar sentences).
+        id_hits = self.identifier_hits(query, cands) if mode in ("bm25", "hybrid") else {}
+        for rid, sids in id_hits.items():
+            if rid not in per_record:
+                units = [(0.0, s) for s in sids] or [(0.0, f"{rid}#heading")]
+                per_record[rid] = units
+                scored.append((0.0, rid))
+        scored.sort(key=lambda t: (tiers.get(t[1], 0), 0 if t[1] in id_hits else 1, -t[0], t[1]))
         scored = self._maybe_rerank(query, scored, per_record)
         top_ids = [rid for _, rid in scored[:k]]
         text_bm25 = self._bm25_text_only(fts_query, set(top_ids)) if mode in ("bm25", "hybrid") else {}
@@ -256,7 +295,7 @@ class Retriever:
             cos = self._dense(query, set(top_ids))
         records = [
             RecordHit(rid, i + 1, round(score, 6),
-                      self._evidence(rid, per_record[rid], bm25, cos, b_rank, d_rank, text_bm25))
+                      self._evidence(rid, per_record[rid], bm25, cos, b_rank, d_rank, text_bm25, id_hits.get(rid)))
             for i, (score, rid) in enumerate(scored[:k])
         ]  # fmt: skip
         t4 = time.perf_counter()
@@ -269,6 +308,7 @@ class Retriever:
             "bm25_hits": len(bm25),
             "candidates": len(cands),
             "tier0_records": sum(1 for v in tiers.values() if v == 0) if tiers else None,
+            "id_matches": len(id_hits),
         }
         timings = {"filters": (t1 - t0) * 1e3, "bm25": (t2 - t1) * 1e3, "dense": (t3 - t2) * 1e3,
                    "fuse_and_evidence": (t4 - t3) * 1e3, "total": (t4 - t0) * 1e3}  # fmt: skip
@@ -314,7 +354,8 @@ class Retriever:
 
     def _evidence(self, rid: str, units: list[tuple[float, str]], bm25: dict[str, float], cos: dict[str, float],
                   b_rank: dict[str, int], d_rank: dict[str, int],
-                  text_bm25: dict[str, float] | None = None) -> list[SentenceHit]:  # fmt: skip
+                  text_bm25: dict[str, float] | None = None,
+                  id_sids: list[str] | None = None) -> list[SentenceHit]:  # fmt: skip
         """Top-N sentences by within-record relevance + every sentence the engine relies on (applicability,
         supersession). A record without sentences contributes its heading unit."""
         fused = {u: s for s, u in units}
@@ -327,6 +368,8 @@ class Retriever:
         for sid in ranked[: int(self.rcfg["evidence_top_sentences"])]:
             if local.get(sid, 0.0) > 0 or fused.get(sid, 0.0) > 0:
                 chosen.setdefault(sid, []).append("top")
+        for sid in id_sids or []:
+            chosen.setdefault(sid, []).append("identifier")
         for tag in ("applicability", "supersession"):
             for sid in sorted(self.anchors[rid][tag]):
                 chosen.setdefault(sid, []).append(tag)

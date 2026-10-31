@@ -120,7 +120,7 @@ aliases:
     rows: 2
   BAE Systems (Operations) Limited:
     canonical: BAE Systems (Operations) Limited
-    family: BAE Systems (Operations) Limited
+    family: BAE Systems
     key: bae systems operations
     rule: unique
     rows: 2
@@ -131,32 +131,32 @@ aliases:
     rule: unique
     rows: 1
   Bell Helicopter Textron:
-    canonical: Bell Helicopter Textron
-    family: Bell Helicopter Textron
+    canonical: Bell Textron, Inc.
+    family: Bell
     key: bell helicopter textron
-    rule: unique
+    rule: explicit
     rows: 4
   Bell Helicopter Textron Canada Limited:
-    canonical: Bell Helicopter Textron Canada Limited
-    family: Bell Helicopter Textron Canada Limited
+    canonical: Bell Textron Canada Limited
+    family: Bell
     key: bell helicopter textron canada
-    rule: unique
+    rule: explicit
     rows: 2
   Bell Textron Canada Limited:
     canonical: Bell Textron Canada Limited
-    family: Bell Textron Canada Limited
+    family: Bell
     key: bell textron canada
     rule: unique
     rows: 9
   Bell Textron Inc.:
     canonical: Bell Textron, Inc.
-    family: Bell Textron, Inc.
+    family: Bell
     key: bell textron
     rule: normalised_key
     rows: 1
   Bell Textron, Inc.:
     canonical: Bell Textron, Inc.
-    family: Bell Textron, Inc.
+    family: Bell
     key: bell textron
     rule: normalised_key
     rows: 1
@@ -198,15 +198,15 @@ aliases:
     rows: 1
   Cessna:
     canonical: Cessna
-    family: Cessna
+    family: Textron Aviation
     key: cessna
     rule: unique
     rows: 9
   Cessna Aircraft Company:
-    canonical: Cessna Aircraft Company
-    family: Cessna Aircraft Company
+    canonical: Cessna
+    family: Textron Aviation
     key: cessna aircraft
-    rule: unique
+    rule: explicit
     rows: 3
   CFM International S.A.:
     canonical: CFM International, S.A.
@@ -263,10 +263,10 @@ aliases:
     rule: unique
     rows: 24
   Embraer S.A.:
-    canonical: Embraer S.A.
-    family: Embraer S.A.
+    canonical: Embraer
+    family: Embraer
     key: embraer s a
-    rule: unique
+    rule: explicit
     rows: 2
   Erickson Air-Crane Incorporated:
     canonical: Erickson Air-Crane Incorporated
@@ -282,21 +282,21 @@ aliases:
     rows: 1
   Eurocopter Canada Limited:
     canonical: Eurocopter Canada Limited
-    family: Eurocopter Canada Limited
+    family: Airbus
     key: eurocopter canada
     rule: unique
     rows: 1
   Eurocopter Deutschland GmbH:
-    canonical: Eurocopter Deutschland GmbH
-    family: Eurocopter Deutschland GmbH
+    canonical: Airbus Helicopters Deutschland GmbH
+    family: Airbus
     key: eurocopter deutschland gmbh
-    rule: unique
+    rule: explicit
     rows: 1
   Eurocopter France:
-    canonical: Eurocopter France
-    family: Eurocopter France
+    canonical: Airbus Helicopters
+    family: Airbus
     key: eurocopter france
-    rule: unique
+    rule: explicit
     rows: 4
   Fokker Services B.V.:
     canonical: Fokker Services B.V.
@@ -317,10 +317,10 @@ aliases:
     rule: unique
     rows: 5
   General Electric Company GE Aerospace:
-    canonical: General Electric Company GE Aerospace
-    family: General Electric Company GE Aerospace
+    canonical: General Electric Company
+    family: General Electric Company
     key: general electric ge aerospace
-    rule: unique
+    rule: explicit
     rows: 3
   Grob-Werke:
     canonical: Grob-Werke
@@ -330,13 +330,13 @@ aliases:
     rows: 3
   Gulfstream Aerospace Corporation:
     canonical: Gulfstream Aerospace Corporation
-    family: Gulfstream Aerospace Corporation
+    family: Gulfstream
     key: gulfstream aerospace
     rule: unique
     rows: 8
   Gulfstream Aerospace LP:
     canonical: Gulfstream Aerospace LP
-    family: Gulfstream Aerospace LP
+    family: Gulfstream
     key: gulfstream aerospace lp
     rule: unique
     rows: 8
@@ -473,10 +473,10 @@ aliases:
     rule: unique
     rows: 1
   Piper:
-    canonical: Piper
-    family: Piper
+    canonical: Piper Aircraft, Inc.
+    family: Piper Aircraft, Inc.
     key: piper
-    rule: unique
+    rule: explicit
     rows: 1
   Piper Aircraft Inc.:
     canonical: Piper Aircraft, Inc.
@@ -498,21 +498,21 @@ aliases:
     rows: 2
   Pratt & Whitney Canada Corp.:
     canonical: Pratt & Whitney Canada Corp.
-    family: Pratt & Whitney Canada Corp.
+    family: Pratt & Whitney
     key: pratt whitney canada corp
     rule: unique
     rows: 1
   Pratt & Whitney Division:
-    canonical: Pratt & Whitney Division
-    family: Pratt & Whitney Division
+    canonical: Pratt & Whitney
+    family: Pratt & Whitney
     key: pratt whitney division
-    rule: unique
+    rule: explicit
     rows: 1
   Pratt & Whitney RTX Corporation (formerly United Technologies Corporation):
-    canonical: Pratt & Whitney RTX Corporation (formerly United Technologies Corporation)
-    family: Pratt & Whitney RTX Corporation (formerly United Technologies Corporation)
+    canonical: Pratt & Whitney
+    family: Pratt & Whitney
     key: pratt whitney rtx formerly united technologies
-    rule: unique
+    rule: explicit
     rows: 1
   PZL-Swidnik S.A.:
     canonical: PZL-Swidnik S.A.
@@ -558,25 +558,25 @@ aliases:
     rows: 4
   Rolls-Royce Corporation:
     canonical: Rolls-Royce Corporation
-    family: Rolls-Royce Corporation
+    family: Rolls-Royce
     key: rolls royce
     rule: unique
     rows: 2
   Rolls-Royce Deutschland:
     canonical: Rolls-Royce Deutschland Ltd & Co KG
-    family: Rolls-Royce Deutschland Ltd & Co KG
+    family: Rolls-Royce
     key: rolls royce deutschland
     rule: normalised_key
     rows: 2
   Rolls-Royce Deutschland Ltd & Co KG:
     canonical: Rolls-Royce Deutschland Ltd & Co KG
-    family: Rolls-Royce Deutschland Ltd & Co KG
+    family: Rolls-Royce
     key: rolls royce deutschland
     rule: normalised_key
     rows: 11
   Rolls-Royce plc:
     canonical: Rolls-Royce plc
-    family: Rolls-Royce plc
+    family: Rolls-Royce
     key: rolls royce plc
     rule: unique
     rows: 4
@@ -660,7 +660,7 @@ aliases:
     rows: 3
   Textron Aviation Inc.:
     canonical: Textron Aviation Inc.
-    family: Textron Aviation Inc.
+    family: Textron Aviation
     key: textron aviation
     rule: unique
     rows: 3

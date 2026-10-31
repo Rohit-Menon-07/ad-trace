@@ -96,7 +96,7 @@ SYNTHETIC = [
     ("SYN04 make only", cfg("Airbus SAS", None), rec(), "UNDETERMINED", "make.only"),
     ("SYN05 same family other make, model differs", cfg("Airbus SAS", "AS350B3"),
      rec(makes=("Airbus Helicopters",), models=(lm("EC130B4"),)), "NOT_APPLICABLE", "model.no_match"),
-    ("SYN06 related make spelling", cfg("Embraer", "EMB-545"), rec(makes=("Embraer S.A.",), models=(lm("EMB-545"),)),
+    ("SYN06 related make spelling", cfg("Embraer", "EMB-545"), rec(makes=("Embraer SA",), models=(lm("EMB-545"),)),
      "APPLICABLE", "serial.none"),
     ("SYN07 model only, exact", cfg(None, "A330-243"), rec(), "APPLICABLE", "serial.none"),
     ("SYN08 exact, no serial, certain", cfg(), rec(certain=True), "APPLICABLE", "serial.none.certain"),
@@ -309,7 +309,7 @@ REAL = [
     ("REAL R0012 radio altimeter: no model list", "R0012", cfg("Airbus Helicopters", "AS350B3"), "UNDETERMINED",
      "model.unknown"),
     ("REAL R0244 record make missing", "R0244", cfg("Hamilton Sundstrand", "14SF-7"), "UNDETERMINED", "make.missing"),
-    ("REAL R0017 related make Embraer vs Embraer S.A.", "R0017", cfg("Embraer", "EMB-545"), "APPLICABLE",
+    ("REAL R0017 Embraer S.A. merged into Embraer", "R0017", cfg("Embraer", "EMB-545"), "APPLICABLE",
      "serial.none"),
     ("REAL R0003 no make no model", "R0003", cfg(None, None), "NOT_CHECKED", "not_checked"),
 ]  # fmt: skip
