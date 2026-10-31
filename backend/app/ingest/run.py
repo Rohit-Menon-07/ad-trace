@@ -1,4 +1,4 @@
-"""Ingestion CLI: python -m backend.app.ingest.run [--xlsx PATH] [--db PATH] [--no-docs]
+"""Ingestion + extraction CLI: python -m backend.app.ingest.run [--xlsx PATH] [--db PATH] [--no-docs]
 
 Idempotent: rebuilds the SQLite DB from scratch (temp file + atomic swap) and regenerates
 configs/alias_make.yaml, docs/make_audit.md and docs/duplicates_audit.md deterministically.
@@ -16,8 +16,9 @@ from pathlib import Path
 from typing import Any
 
 from backend.app.config import ROOT, repo_path
+from backend.app.extract.run import ExtractResult, extract_db, summary_text
 from backend.app.ingest import audit
-from backend.app.ingest.db import to_json, write_database
+from backend.app.ingest.db import swap_in, temp_path, to_json, write_database
 from backend.app.ingest.duplicates import GroupResult, Row, classify_all
 from backend.app.ingest.loader import LoadResult, load_records
 from backend.app.ingest.makes import (
@@ -45,6 +46,7 @@ class IngestResult:
     groups: list[GroupResult]
     sentences: list[dict[str, Any]]
     cell_counts: Counter[str]
+    extract: ExtractResult | None = None
 
 
 def apply_makes(records: list[dict[str, Any]]) -> tuple[dict[str, AliasEntry], list[dict[str, Any]], Counter[str]]:
@@ -116,7 +118,8 @@ def build_vocab(alias: dict[str, AliasEntry], record_makes: list[dict[str, Any]]
     ]  # fmt: skip
 
 
-def ingest(xlsx: Path, db_path: Path, write_docs: bool = True) -> IngestResult:
+def ingest(xlsx: Path, db_path: Path, write_docs: bool = True, extract: bool = True) -> IngestResult:
+    """Build the DB in a temp file, run extraction on it, then swap it in. Re-running gives identical output."""
     load = load_records(xlsx)
     records = load.records
     alias, record_makes, cell_counts = apply_makes(records)
@@ -136,7 +139,10 @@ def ingest(xlsx: Path, db_path: Path, write_docs: bool = True) -> IngestResult:
          "note": g.note}
         for g in groups
     ]  # fmt: skip
-    write_database(db_path, db_records, sentences, record_makes, vocab, groups_rows, meta)
+    tmp = temp_path(db_path)
+    write_database(tmp, db_records, sentences, record_makes, vocab, groups_rows, meta)
+    extracted = extract_db(tmp, write_docs=write_docs) if extract else None
+    swap_in(tmp, db_path)
 
     if write_docs:
         airbus_rows = [
@@ -149,7 +155,7 @@ def ingest(xlsx: Path, db_path: Path, write_docs: bool = True) -> IngestResult:
         _write(ALIAS_PATH, audit.alias_yaml(alias))
         _write(MAKE_AUDIT_PATH, audit.make_audit_md(alias, cell_counts, airbus_rows, missing))
         _write(DUP_AUDIT_PATH, audit.duplicates_md(groups, {r["id"]: r for r in records}))
-    return IngestResult(load, alias, groups, sentences, cell_counts)
+    return IngestResult(load, alias, groups, sentences, cell_counts, extracted)
 
 
 def _write(path: Path, content: str) -> None:
@@ -197,6 +203,8 @@ def main(argv: list[str] | None = None) -> None:
         raise SystemExit(f"Source workbook not found: {args.xlsx}")
     res = ingest(args.xlsx, args.db, write_docs=not args.no_docs)
     print(quality_summary(res))
+    if res.extract:
+        print(summary_text(res.extract))
     print(f"\nwrote {args.db.relative_to(ROOT) if args.db.is_relative_to(ROOT) else args.db}")
 
 

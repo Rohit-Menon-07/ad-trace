@@ -1,4 +1,4 @@
-"""SQLite persistence. The database is rebuilt into a temp file and atomically swapped in (idempotent)."""
+"""SQLite persistence. Callers build into a temp file and swap it in with `swap_in` (idempotent)."""
 
 from __future__ import annotations
 
@@ -84,9 +84,8 @@ def write_database(
     meta: dict[str, str],
 ) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.unlink(missing_ok=True)
-    conn = sqlite3.connect(tmp)
+    path.unlink(missing_ok=True)
+    conn = sqlite3.connect(path)
     try:
         conn.executescript(SCHEMA)
         _insert(conn, "records", RECORD_COLUMNS, records)
@@ -98,6 +97,14 @@ def write_database(
         conn.commit()
     finally:
         conn.close()
+
+
+def temp_path(path: Path) -> Path:
+    return path.with_suffix(path.suffix + ".tmp")
+
+
+def swap_in(tmp: Path, path: Path) -> None:
+    """Atomically replace the live DB with a fully built one."""
     os.replace(tmp, path)
 
 

@@ -14,3 +14,7 @@ extend-exclude = ["frontend", ".venv"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests embed verbatim REAL summary sentences; wrapping them would obscure the golden text.
+"backend/tests/*" = ["E501"]

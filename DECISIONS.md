@@ -68,3 +68,39 @@ Deviations from docs/SPEC.md and choices made where it was ambiguous. One line e
 46. **Correction rows (4, docket ends in `R1` or Comments mention an OFR correction) record their base docket in a note.** None of the base dockets is in the dataset.
 47. **Splitter rule: a protected abbreviation (U.S., No., Inc., Ltd., Co., S.A., S.p.A., Jr., …) does not end a sentence unless the next word is a strong starter ("This", "The", "We", …).** Periods inside matched brackets never split; unmatched brackets are ignored. *Reason: handles "Bombardier, Inc., Model" and "Textron Inc. This proposed AD" alike. On this dataset the override never fires.*
 48. **Ingest regenerates `configs/alias_make.yaml`, `docs/make_audit.md` and `docs/duplicates_audit.md` deterministically on every run**, and builds the DB in a temp file that is atomically swapped in. *Reason: idempotent; rules are reviewed in code, and the yaml is the generated view of them.*
+
+## Prompt 4: rule-based extraction with provenance (items marked REVIEW need a human decision)
+
+49. **`make ingest` = ingest → extract on the temp DB → atomic swap.** A failed extraction never leaves a half-built DB. `python -m backend.app.extract.run` re-runs extraction alone; it drops and recreates its own tables.
+50. **Span offsets:** `source=summary` spans are offsets into the Summary; `source=comments` spans are offsets into the Comments text; `source=column` spans are null. *Reason: SPEC only defines Summary offsets, and Comments must stay traceable too.*
+51. **REVIEW. `family()` = the part before the first hyphen, but if that part has no digit (DC, BD, EMB, P, MBB) the next segment is included:** DC-9-81 → DC-9, BD-700-2A12 → BD-700, EMB-545 → EMB-545. *Reason: the literal rule makes "DC", "BD" and "P" families, which merges unrelated aircraft.*
+52. **REVIEW. Suffix expansion uses the base before the LAST hyphen of the first full designator** ("DC-9-81, -82" → DC-9-82), not the first. It is identical for A330-243 / 777-200. *Reason: the first-hyphen rule gives "DC-82".*
+53. **REVIEW. `norm_model` glues letters to numbers only for letter groups of at most 4 characters:** "AS 365 N2" → AS365N2 and "A300 B4-603" → A300B4-603, but "A330-200 Freighter" stays "A330-200 FREIGHTER". "SA-365N" and "SA365N" stay different (hyphens are kept), and "Gulfstream G150" ≠ "G150". *Reason: the literal rule produced "200FREIGHTER". Linking in S1 must handle the remaining variants.*
+54. **REVIEW. "737-600, -700, … and 900ER" (a source typo with no dash) gives "900ER" as LOW (`model.summary.orphan_suffix`), not 737-900ER.** *Reason: no guessing; LOW models don't count as an extracted list.*
+55. **Model column text without a digit ("radio (also known as radar) altimeter") is LOW `model.column.nondesignator` with model = null.** All-caps hyphenated codes without digits (G-IV, GIV-X, GV-SP) ARE accepted as designators.
+56. **Added `model.summary.postfix`:** "PW210A and PW210S model turboshaft engines" and "S-76 model helicopters" (lowercase "model" after the list). *Reason: 8 real extractions the prefix rule cannot see.*
+57. **Engine models named in an aircraft record ("767 airplanes equipped with GE Model CF6…") are kept**, with `value.product = "engines"`. *Reason: they are cited in the record; S4 can filter by product.*
+58. **REVIEW. `applies_all_of_family` is emitted per family of every model in an "all … Model X" list**, so "all … Model AS350B3" gives family AS350B3. For hyphenless designators the family equals the model, so "all" means all serials of that model. *Reason: the literal "family" wording only makes sense for series lists. S4 must treat it as "all serials of the listed models".*
+59. **Serial ranges/lists: NONE exist in the dataset** (0 "X through Y", 0 MSN/S-N numbers). The rules are implemented and tested on SYNTHETIC text only, with REAL negative tests. "certain serial numbers" is not a constraint. *Reason: the brief expected ~19; those summaries only say "certain serial numbers".*
+60. **REVIEW. `svcinfo.defined` requires products/serial numbers to be "identified/listed/specified in" service information or a service bulletin; it fires on 0 real records.** "As specified in an EASA AD" (actions) and "unsafe condition identified in the NPRM" are deliberately excluded. *Reason: loose phrases gave only false positives.*
+61. **Added rules beyond the brief:**
+    - `withdraw.notice`: 123 records are themselves withdrawal notices.
+    - `extension.notice`: 4 records announce a comment-period extension.
+    - `continue.retain`: "retain the requirements from AD X", MEDIUM.
+    - `applicability.add` / `applicability.remove`: MEDIUM.
+    - `supersede.unnumbered`: "supersede an existing AD", LOW, no edge.
+    - `supersede.negated`: "decided not to supersede", LOW.
+
+    *Reason: needed for status and lineage; all are visible by rule_id.*
+62. **AD numbers tolerate PDF spaces ("AD 2024- 05-13" → 2024-05-13) and keep revision suffixes ("72-14-08 R1").** Supersession captures every AD in the clause, including "…; and AD Y, which…".
+63. **Lineage edges:**
+    - supersedes/continues target "AD n" and are never marked in-dataset (the AD Number column holds each NPRM's final AD number; none is cited).
+    - withdraws targets same-docket records issued no later than the notice.
+    - comment_extension notices target the other records in their docket.
+    - shares_docket edges are written for every same-docket pair.
+    - applicability_change targets the record's first superseded/continued AD, else its docket.
+64. **REVIEW. R0159's sheet already shows the extended due date (12/09/2024)**, so the extension changes nothing there. `comments_due_effective` logic is proven on a SYNTHETIC row.
+65. **New table `record_flags`** (per-record model list + confidence, families, all-families, certain, serial_resolved, svcinfo, is_withdrawal_notice, withdrawn_by). *Reason: precomputed inputs for the S4 engine.*
+66. **Coverage denominator = 430 non-duplicate records.** "Model list extracted" counts HIGH or MEDIUM only. `coverage_report.json` uses the CoverageReport API schema; `generated_at` is the source sha1 (not a timestamp), so it stays idempotent.
+67. **`docs/extraction_spotcheck.csv` is 25 uniformly random extractions (seed 20261031), written only if the file is absent**, so re-ingesting never overwrites your Y/N labels. Because it is uniform, ~25% are trivial Model-column rows. Precision: `python scripts/spotcheck_precision.py` (with a Wilson 95% interval).
+68. **Ruff E501 is ignored in `backend/tests/*`.** *Reason: golden tests embed verbatim real sentences.*
