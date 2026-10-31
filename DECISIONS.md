@@ -194,3 +194,34 @@ Deviations from docs/SPEC.md and choices made where it was ambiguous. One line e
      Without it, ~50 records with no model list (kept so UNDETERMINED is visible) outranked R0002, which lists PW4090. `features.tier0_records` reports how many records matched outright.
 113. **`engine.explain.link_model` (used by the CLIs) now uses the same family rule as `pipeline.linker`** (an exact designator with ≤ 1 variant is a model): PW4090 had been treated as a family.
 114. **`scripts/live_generate.py` runs the 3 live queries** (pack, raw tool output, tokens/cost). It is blocked until `data/.env` holds a real key; until then each query shows the extractive fallback with the reason.
+
+## Prompt 9: verification layer (items marked REVIEW need a human decision)
+
+115. **Layers are switched by `config.yaml` `verify.{quotes,grounding,llm}` and per call by `verify(..., layers={...})`** (ablation). With `quotes` off, a quote is still located for highlighting but never drops a claim.
+116. **Quote normalisation:**
+     - Steps: HTML-unescape (the pack is escaped), NFKC, curly→straight quotes, all dash characters → "-", casefold, whitespace collapsed, surrounding punctuation stripped from the quote.
+     - Matching is done on a character index map, so spans point at exact Summary offsets.
+     - A quote must lie inside ONE cited sentence.
+     - Extra reason code `QUOTE_MISSING`: evidence is cited but there is no quote.
+117. **REVIEW. AD numbers and ISO dates share the shape YYYY-NN-NN, so they are compared as one "code" set.** Dates written as "December 3, 2026", "3 December 2026" or "12/3/2026" are converted to ISO first. A claim's AD number therefore also counts as grounded if the same string is a cited date (accepted risk; it has not happened in the fixtures).
+118. **Grounding haystack = cited sentences + cited fact lines + cited ids + cited records' docket, AD Number, FR citation, pages, make and FULL model list.** The pack's `<e>` attribute shows at most 10 models, but PackRecord keeps all of them for grounding. Numbers are grounded if they appear anywhere as a digit run in the haystack, so this is permissive for numbers that are part of designators.
+119. **REVIEW. Mandate check:**
+     - Drops any claim containing requires / required / must / mandatory / mandates / shall / effective immediately without propose* / would / notice / NPRM.
+     - Exception: "AD <number> requires…" describes an existing final AD cited by the proposal (R0003#s2 does this), and the AD number must itself be grounded.
+     - Known false-positive risk: "The existing AD requires…" (no number) is dropped.
+120. **REVIEW. Fact consistency is checked only against cited *applicability* facts:**
+     - The claim's stance (negative phrases first) comes from the keyword table in `configs/rules.yaml`.
+     - Conflicts: APPLICABLE wording vs a NOT_APPLICABLE / UNDETERMINED / NOT_CHECKED fact; NOT_APPLICABLE wording vs APPLICABLE / UNDETERMINED / NOT_CHECKED; UNDETERMINED wording vs NOT_APPLICABLE.
+     - A cautious downgrade ("may apply" when APPLICABLE with "certain airplanes") is allowed.
+     - Status facts ("comment period closed") are left to the LLM layer.
+121. **Verifier input per item: the claim, plus its quote and/or the cited fact lines (prefixed with record id).** No question and no other evidence; a test asserts this. Claims whose text equals their quote are SUPPORTED without a call ("verbatim"). Extractive answers skip the LLM layer: there is no model wording to audit.
+122. **REVIEW. If the verifier call fails (LLMError), every claim that needed it is dropped with VERIFIER_ERROR** (fail closed). The status becomes VERIFICATION_FAILED, or partial if verbatim/extractive claims survived. Prompt 10 should then show the extractive answer.
+123. **Rationale steps need ≥ 1 existing evidence/fact id in brackets and must pass entity grounding against the ids they cite** (no mandate/fact checks). Fewer than 2 surviving → `rationale_steps` is empty, and the UI hides the panel.
+124. **Status:**
+     - all kept → answered;
+     - some kept → partial ("N statements removed because they could not be verified.");
+     - none kept → refused with VERIFICATION_FAILED;
+     - model cannot_answer → refused with no code (Prompt 10 maps it).
+
+     `to_api_claims()` emits only kept claims with `verification="verified"`. A fact citation uses `evidence_id = "<record>#F<n>"`, so the drawer opens the record.
+125. **The live adversarial test now asserts that a real, uncached verifier call happened.** The first version passed vacuously with the placeholder key, because fail-closed verification dropped every claim and the test only checked that no semantic case was kept.

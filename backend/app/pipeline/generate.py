@@ -60,6 +60,7 @@ class PackRecord:
     applicability: Applicability | None = None
     status: RecordStatus | None = None
     lineage: Lineage | None = None
+    url: str | None = None
 
 
 @dataclass(frozen=True)
@@ -89,6 +90,7 @@ class EvidencePack:
     evidence: list[EvidenceItem]
     facts: list[ComputedFact]
     text: str
+    records: dict[str, PackRecord] = field(default_factory=dict)  # metadata for verification (H5) and citations
 
     @property
     def evidence_ids(self) -> set[str]:
@@ -223,6 +225,11 @@ def _short_makes(make: str | None, limit: int = 3) -> str:
     return " | ".join(parts[:limit] + ([f"(+{len(parts) - limit} more)"] if len(parts) > limit else []))
 
 
+def _short_models(models: list[str], limit: int = 10) -> str:
+    """Display list for the <e> attribute only; the full list stays on PackRecord for verification."""
+    return ", ".join(models[:limit] + ([f"(+{len(models) - limit} more)"] if len(models) > limit else []))
+
+
 def build_pack(question: str, records: list[PackRecord], max_sentences: int = MAX_SENTENCES) -> EvidencePack:
     evidence = _select(records, max_sentences)
     facts = _facts(records)
@@ -232,14 +239,14 @@ def build_pack(question: str, records: list[PackRecord], max_sentences: int = MA
         r = by_id[e.record_id]
         attrs = (
             f'id="{esc_attr(e.id)}" docket="{esc_attr(r.docket)}" ad_number="{esc_attr(r.ad_number)}" '
-            f'make="{esc_attr(_short_makes(r.make))}" models="{esc_attr(", ".join(r.models))}" '
+            f'make="{esc_attr(_short_makes(r.make))}" models="{esc_attr(_short_models(r.models))}" '
             f'fr_citation="{esc_attr(r.fr_citation)}" pages="{esc_attr(r.pages)}"'
         )
         lines.append(f"<e {attrs}>{esc_text(e.text)}</e>")
     lines += ["</evidence>", "<computed_facts>"]
     lines += [f"{f.id} | {f.kind} | {f.record_id} | {esc_text(f.text)}" for f in facts]
     lines += ["</computed_facts>", f"<user_question>{esc_text(question)}</user_question>"]
-    return EvidencePack(question, evidence, facts, "\n".join(lines))
+    return EvidencePack(question, evidence, facts, "\n".join(lines), by_id)
 
 
 # ------------------------------------------------------------------ validation against the pack
@@ -361,8 +368,9 @@ def pack_records_from_retrieval(retriever: Any, result: Any, cfg: Any, k: int = 
     out = []
     for hit in result.records[:k]:
         rid = hit.record_id
-        docket, ad, make, fr, cit, pages = retriever.conn.execute(
-            "SELECT docket, ad_number, make_canonical, fr_citation, citation_text, pages FROM records WHERE id = ?",
+        docket, ad, make, fr, cit, pages, url = retriever.conn.execute(
+            "SELECT docket, ad_number, make_canonical, fr_citation, citation_text, pages, url "
+            "FROM records WHERE id = ?",
             (rid,),
         ).fetchone()
         rec = retriever.engine.records[rid]
@@ -384,13 +392,14 @@ def pack_records_from_retrieval(retriever: Any, result: Any, cfg: Any, k: int = 
                 docket,
                 ad,
                 make,
-                sorted(rec.models)[:10],
+                sorted(rec.models),  # full list: verification grounds designators against it
                 fr or cit,
                 pages,
                 sentences,
                 evaluate(cfg, rec),
                 record_status(rec, retriever.engine, cfg.as_of),
                 lineage(rec, retriever.engine),
+                url,
             )
         )
     return out

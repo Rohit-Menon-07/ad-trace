@@ -11,12 +11,13 @@ import re
 from collections.abc import Callable
 from typing import Any
 
-_REGISTRY: dict[str, list[tuple[str | None, dict[str, Any]]]] = {}
+_REGISTRY: dict[str, list[tuple[str | None, Any]]] = {}  # output: dict, or callable(user_message) -> dict
 _FALLBACKS: dict[str, Callable[[str], dict[str, Any]]] = {}
 
 
-def register(tool_name: str, output: dict[str, Any], when: str | None = None) -> None:
-    """Most recent registration wins; `when=None` matches any message."""
+def register(tool_name: str, output: Any, when: str | None = None) -> None:
+    """Most recent registration wins; `when=None` matches any message. `output` may be a callable taking the
+    user message (used by the FAKE verifier, which must answer per item)."""
     _REGISTRY.setdefault(tool_name, []).insert(0, (when, output))
 
 
@@ -29,7 +30,7 @@ def answer(tool_name: str, user_message: str) -> dict[str, Any]:
 
     for when, output in _REGISTRY.get(tool_name, []):
         if when is None or when in user_message:
-            return output
+            return output(user_message) if callable(output) else output
     if tool_name in _FALLBACKS:
         return _FALLBACKS[tool_name](user_message)
     raise LLMError(f"FAKE LLM: no canned output registered for tool {tool_name!r}")

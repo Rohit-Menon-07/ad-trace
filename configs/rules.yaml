@@ -38,3 +38,21 @@ reasons:
   svcinfo: "serial applicability is defined in referenced service information that is not in the provided text"
   certain_serial: "the proposal affects only certain airplanes of this model and the summary does not say which serial numbers"
   no_serial_limit: "no serial limitation stated in the summary"
+
+# ---------------------------------------------------------------- verification (backend/app/pipeline/verify.py)
+verify:
+  # Fact consistency (H5): wording a claim uses for a verdict. Negative phrases are checked first because
+  # "does not apply" contains "apply". Matching is on the casefolded claim text.
+  verdict_phrases:
+    NOT_APPLICABLE: ["does not apply", "do not apply", "not applicable", "doesn't apply", "does not cover",
+                     "does not affect", "is excluded", "are excluded", "not affected"]
+    UNDETERMINED: ["undetermined", "cannot be determined", "could not be determined", "unclear whether",
+                   "may apply", "might apply", "may affect", "not possible to determine"]
+    APPLICABLE: ["applies to", "apply to", "is applicable", "are applicable", "applicable to", "covers your",
+                 "affects your", "your aircraft is affected", "your airplane is affected"]
+  # Mandate check: a claim stating a requirement in force, without proposal wording, is dropped.
+  mandate_words: ["requires", "required", "must", "mandatory", "mandates", "shall", "effective immediately"]
+  proposal_words: ["propose", "proposes", "proposed", "proposal", "would", "notice", "nprm"]
+  # "AD 2025-09-07 requires ..." describes an existing final AD cited by the proposal: allowed (the AD number
+  # itself must still be grounded by the entity check).
+  existing_ad_subject: '\bAD\s+\d{2,4}\s?-\s?\d{2}\s?-\s?\d{2,3}(?:\s+R\d+)?\s+(?:also\s+|currently\s+)?(?:requires|required|mandates)\b'

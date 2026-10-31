@@ -25,6 +25,13 @@ llm:
     claude-sonnet-5-5: [2.00, 10.00]
   call_log: logs/llm_calls.jsonl
 
+# Verification layers (S7). Each can be switched off for the ablation study.
+verify:
+  quotes: true                       # H4 quote must be a substring of the cited sentence
+  grounding: true                    # H5 entities, mandate language, fact consistency
+  llm: true                          # H6 independent verifier (Haiku), one batched call
+  min_rationale_steps: 2             # UI shows the model rationale only if this many steps survive
+
 embeddings:
   model: BAAI/bge-small-en-v1.5
   fallback: tfidf_char_ngrams        # used if the model cannot be downloaded; reported in /api/meta
