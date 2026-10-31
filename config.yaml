@@ -1,0 +1,43 @@
+# AD Trace runtime configuration. Model IDs are pinned (H11).
+# Verify model IDs against Anthropic's current model list before each build.
+
+models:
+  generation: claude-sonnet-5-5      # S6 generation
+  query_parser: claude-haiku-5-5     # S1 query understanding
+  verifier: claude-haiku-5-5         # S7 independent verifier (H6)
+  temperature: 0
+  max_tokens_generation: 1500
+  max_tokens_parser: 400
+  max_tokens_verifier: 200
+
+embeddings:
+  model: BAAI/bge-small-en-v1.5
+  fallback: tfidf_char_ngrams        # used if the model cannot be downloaded; reported in /api/meta
+
+data:
+  raw_xlsx: "data/raw/AD Notice of Proposed Rulemaking (AD NPRM).xlsx"
+  sqlite_path: data/index/adtrace.sqlite
+  embeddings_path: data/index/emb_sentences.npy
+  embedding_ids_path: data/index/ids.json
+  coverage_report: data/processed/coverage_report.json
+  eval_results: data/eval/results.json
+  alias_make: configs/alias_make.yaml
+  rules: configs/rules.yaml
+
+# null = resolve to today's date at request time. The resolved date is echoed in
+# every SearchResponse.as_of and written to the audit log.
+as_of: null
+
+thresholds:
+  entity_fuzzy_min: 90               # rapidfuzz score (0-100) to accept a vocab match (H8)
+  rrf_k: 60                          # Reciprocal Rank Fusion constant (S3)
+  top_k_records: 8                   # records returned by retrieval (S3)
+  evidence_sentences_max: 24         # sentences in the evidence pack (S6)
+  min_retrieval_score: 0.015         # below this fused score -> LOW_RETRIEVAL_SCORE (S5); tune on eval set
+  max_rationale_steps: 5             # H9
+  latency_budget_ms: 3000            # retrieval target (sub-3-second)
+
+logging:
+  audit_log: logs/audit.jsonl
+  feedback_log: logs/feedback.jsonl
+  response_cache_dir: data/index/cache
