@@ -106,6 +106,8 @@ def extract_record(rec: Rec) -> list[Extraction]:
             withdrawal = lineage.withdrawal_from_sentence(rec.id, rec.docket, s)
         if not any(e.rule_id == "extension.notice" for e in other):
             other += lineage.extension_notice_from_sentence(rec.id, s)
+    if not withdrawal:
+        withdrawal = lineage.withdrawal_from_subject(rec.id, rec.docket, rec.subject_heading)
     resolved = [e for e in serial_ex if not e.value.get("excluded")]
     out += models.dedupe_models(summary_models) + serial_ex + ([] if resolved else svc[:1]) + other + withdrawal
     out += lineage.from_comments(rec.id, rec.comments)

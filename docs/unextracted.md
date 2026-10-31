@@ -17,8 +17,8 @@ model list extracted, by era:
   pre-2010                      117 / 146   80.1%
   2020+                         197 / 200   98.5%
 model list extracted, by notice kind:
-  withdrawal notice             100 / 123   81.3%
-  proposal/revision/other       281 / 307   91.5%
+  withdrawal notice             100 / 124   80.6%
+  proposal/revision/other       281 / 306   91.8%
 ```
 
 | Record | Docket | Make | Kind | Likely reason | Summary starts |
@@ -46,7 +46,7 @@ model list extracted, by notice kind:
 | R0286 | FAA-2009-1028 | Gulfstream Aerospace LP | proposal/other | summary says "products listed above" | We propose to adopt a new airworthiness directive (AD) for the products listed above. This proposed AD results |
 | R0289 | FAA-2007-0242 | General Electric Company | withdrawal notice | no 'Model' phrase in summary | This action withdraws a notice of proposed rulemaking (NPRM) that proposed a new airworthiness directive (AD), |
 | R0293 | FAA-2007-0242 | General Electric Company | proposal/other | no 'Model' phrase in summary | The FAA proposes to adopt a new airworthiness directive (AD) for General Electric Company (GE) CF6-80C2 and CF |
-| R0294 | 2000-NM-120-AD | Embraer | proposal/other | empty summary |  |
+| R0294 | 2000-NM-120-AD | Embraer | withdrawal notice | empty summary |  |
 | R0296 | FAA-2007-0373 | Erickson Air-Crane Incorporated | proposal/other | no 'Model' phrase in summary | This document proposes adopting a new airworthiness directive (AD) for the specified Erickson Air-Crane Incorp |
 | R0303 | FAA-2007-27495 | Eurocopter France | proposal/other | no 'Model' phrase in summary | This document proposes adopting a new airworthiness directive (AD) for the specified Eurocopter France (ECF) m |
 | R0304 | FAA-2006-26691 | Reims Aviation S.A. | proposal/other | summary says "products listed above" | We propose to adopt a new airworthiness directive (AD) for the products listed above. This proposed AD results |

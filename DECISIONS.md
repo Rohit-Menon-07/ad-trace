@@ -104,3 +104,24 @@ Deviations from docs/SPEC.md and choices made where it was ambiguous. One line e
 66. **Coverage denominator = 430 non-duplicate records.** "Model list extracted" counts HIGH or MEDIUM only. `coverage_report.json` uses the CoverageReport API schema; `generated_at` is the source sha1 (not a timestamp), so it stays idempotent.
 67. **`docs/extraction_spotcheck.csv` is 25 uniformly random extractions (seed 20261031), written only if the file is absent**, so re-ingesting never overwrites your Y/N labels. Because it is uniform, ~25% are trivial Model-column rows. Precision: `python scripts/spotcheck_precision.py` (with a Wilson 95% interval).
 68. **Ruff E501 is ignored in `backend/tests/*`.** *Reason: golden tests embed verbatim real sentences.*
+
+## Prompt 5: applicability and revision engine (items marked REVIEW need a human decision)
+
+69. **The CLI is `python -m backend.app.engine.explain` (package `backend.app`), not `app.engine.explain`.** `--bench` times the engine over all records.
+70. **REVIEW. Two match outcomes added to SPEC's four:**
+    - `SERIES_OVERLAP`: the record lists a series ("A330-200", "737-900 series") and the query is a variant that may belong to it (A330-243, 737-900ER).
+    - `SPELLING_VARIANT`: the same designator up to punctuation or a leading name (SA-365N/SA365N, GULFSTREAM G150/G150).
+
+    Both give UNDETERMINED, never NOT_APPLICABLE, and neither can produce APPLICABLE, so this is not fuzzy matching. *Reason: without them, 8 real A330-200-series records would wrongly say NOT_APPLICABLE for an A330-243.*
+71. **REVIEW. `applies_all_of_family` counts as EXACT only when the whole-type designator itself is listed** ("all … Model A318 series" → A318). *Reason: R0061 says "all Airbus SAS Model A330-243, A330-243F, …"; the literal rule would make it APPLICABLE to an A330-202 it never lists. The guard is enforced in both the loader and `match_model`.*
+72. **A record that lists the whole type ("Model A330 and A340 airplanes") matches any variant of it (EXACT, "family_level").** *Reason: over-inclusion is the safe direction.*
+73. **REVIEW. NO_MATCH is UNDETERMINED (not NOT_APPLICABLE) whenever the record has LOW-confidence model tokens** (an orphan "900ER" or a non-designator). *Reason: the list may be incomplete. This applies the safety invariant to "MEDIUM list + LOW leftovers".*
+74. **REVIEW. Related makes:** when the normalised keys share a first word (Embraer / Embraer S.A., Bell variants), the make check does not exclude; the model check decides. A make-family match (Airbus SAS vs Airbus Helicopters) also passes the make check, per the spec.
+75. **Make given but no model → UNDETERMINED ("model applicability was not checked").** *Reason: SPEC defines NOT_CHECKED only for no make and no model; APPLICABLE would overclaim.*
+76. **Serial supplied + `qualifier_certain`, with no service-info wording, uses its own reason** ("affects only certain airplanes … summary does not say which serial numbers"). The verdict is UNDETERMINED as specified; the service-information wording is reserved for `svcinfo`.
+77. **An exclusion wins over an inclusion range** (a serial inside a range but in an "except" list → NOT_APPLICABLE). Different prefixes or formats → UNDETERMINED (`serial.incomparable`).
+78. **Evidence ids:** sentence ids for Summary evidence; `R0001#col:Model` / `#col:Subject Heading` / `#col:Comments` for column-based evidence. Every NOT_APPLICABLE carries `basis` (the confidences it rests on); a test asserts it is always HIGH/MEDIUM.
+79. **Withdrawn = any record whose `withdraws_docket` equals this record's docket (docket-level, as specified).** The withdrawal notice itself is therefore also "withdrawn"; the UI should label it as the notice.
+80. **REVIEW. New extraction rule `withdraw.subject` (HIGH, source=column): Subject Heading contains "Withdrawal"**, used only when the Summary shows no withdrawal. *Reason: R0294 (an empty Summary) is the withdrawal notice for docket 2000-NM-120-AD; without it, 4 records showed as not withdrawn.*
+81. **`is_latest_in_docket_group`:** the latest `citation_publish_date` among non-duplicates; ties mark all tied records as latest; duplicates are never latest.
+82. **`superseded_by_proposal` uses only the AD Number column.** In the real data it is empty for every record (no NPRM's final AD number is cited elsewhere), and a test asserts this so the claim stays honest.

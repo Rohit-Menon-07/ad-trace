@@ -10,6 +10,9 @@ Summary rules (offsets into the Summary):
   applicability".
 - withdraw.notice (HIGH): the record itself withdraws an NPRM ("withdraws/is withdrawing ... NPRM").
 - extension.notice (HIGH): the record itself extends/reopens the comment period of the NPRM in its docket.
+Column rule:
+- withdraw.subject (HIGH): Subject Heading contains "Withdrawal" and the Summary did not already show it
+  (R0294 has an empty Summary).
 Comments rules (offsets into the Comments text):
 - comments.withdraws (HIGH): "Withdraws FAA AD NPRM <docket>".
 - comments.extension (HIGH): "Comment Due Date was extended. The updated Due Date is M/D/YYYY".
@@ -145,6 +148,17 @@ def withdrawal_from_sentence(record_id: str, docket: str, sent: Sent) -> list[Ex
         return []
     value = {"docket": docket, "self_notice": True}
     return [from_sentence(record_id, sent, m.start(), m.end(), "withdraws_docket", value, "withdraw.notice", "HIGH")]
+
+
+_SUBJECT_WITHDRAWAL = re.compile(r"\bWithdrawal\b", re.IGNORECASE)
+
+
+def withdrawal_from_subject(record_id: str, docket: str, subject: str | None) -> list[Extraction]:
+    """'Airworthiness Directives; Withdrawal - ...' marks a withdrawal notice even when the Summary is empty."""
+    if not subject or not _SUBJECT_WITHDRAWAL.search(subject):
+        return []
+    value = {"docket": docket, "self_notice": True, "from": "subject_heading"}
+    return [Extraction(record_id, "withdraws_docket", value, "column", None, None, None, "withdraw.subject", "HIGH")]
 
 
 _EXT_NOTICE = re.compile(

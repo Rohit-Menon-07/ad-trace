@@ -315,6 +315,16 @@ def test_withdraw_notice_plural_REAL_R0371() -> None:
     assert [e.rule_id for e in exs] == ["withdraw.notice"] and exs[0].value["self_notice"] is True
 
 
+def test_withdraw_subject_REAL_R0294() -> None:
+    subject = (
+        "Airworthiness Directives; Withdrawal - Empresa Brasileira de Aeronautica S.A. (EMBRAER) Model EMB-120 Series "
+        "Airplanes"
+    )
+    exs = lineage.withdrawal_from_subject("R0294", "2000-NM-120-AD", subject)
+    assert [(e.rule_id, e.source, e.value["docket"]) for e in exs] == [("withdraw.subject", "column", "2000-NM-120-AD")]
+    assert lineage.withdrawal_from_subject("R1", "D", "Airworthiness Directives; Airbus SAS Airplanes") == []
+
+
 def test_withdraw_notice_not_on_proposal_SYNTHETIC() -> None:
     assert (
         lineage.withdrawal_from_sentence("R1", "D", sent("The FAA proposes to adopt a new AD for X airplanes.")) == []

@@ -1,0 +1,40 @@
+# Applicability engine rules (backend/app/engine). Pure code reads this file; no LLM decides anything here.
+# Changing a value here changes verdicts: every change needs a test in backend/tests/test_engine.py.
+
+# Safety invariant: NOT_APPLICABLE may only rest on extractions with these confidences.
+not_applicable_requires_confidence: [HIGH, MEDIUM]
+
+# A listed designator whose variant part matches this pattern is treated as a SERIES name
+# (A330-200, 737-300, A330-900). A query variant starting with the same digit (A330-243, A330-941)
+# may belong to that series, so the match is SERIES_OVERLAP -> UNDETERMINED, never NOT_APPLICABLE.
+series_variant_pattern: '^\d00$'
+
+# Makes whose normalised keys share their first word (Embraer / Embraer S.A., Bell variants) are
+# "related": the make check does not exclude the record; the model check decides.
+related_make_same_first_key_token: true
+
+reasons:
+  not_checked: "No make or model was given, so applicability was not checked."
+  different_make: "record concerns a different manufacturer ({record_make}; you asked about {query_make})"
+  related_make: "make is spelled differently in the record ({record_make}); treated as possibly the same manufacturer"
+  missing_make: "the record has no manufacturer, so the make cannot be compared"
+  exact: "{model} is listed in the record ({confidence} confidence, {source})"
+  family_level: "the record lists the whole {family} type, which includes {model}"
+  all_family: "the proposal applies to all {family} {noun}"
+  family_only: "query names a family; the record lists specific variants"
+  make_only: "make matches, but no model was given, so model applicability was not checked"
+  series_overlap: "the record names the {series} series; the summary does not say whether {model} belongs to it"
+  spelling_variant: "the record lists {listed}, which may be the same designator as {model} written differently"
+  no_match: "{model} is not in the record's model list ({confidence} confidence): {listed}"
+  no_match_incomplete: "{model} is not in the extracted model list, but the list contains unparsed or LOW-confidence entries ({low}), so it may be incomplete"
+  no_match_low: "{model} is not in the extracted model list, which is LOW confidence"
+  unknown_models: "the record has no usable model list"
+  no_serial: "model matches and no serial-number limitation is stated in the summary"
+  certain_no_serial: "model matches; the proposal affects only certain airplanes of this model; supply a serial number to narrow"
+  serial_in: "serial {serial} is within {constraint}"
+  serial_out: "serial {serial} is outside {constraint}"
+  serial_excluded: "serial {serial} is excluded: {constraint}"
+  serial_incomparable: "serial {serial} cannot be compared with {constraint} (different prefix or format)"
+  svcinfo: "serial applicability is defined in referenced service information that is not in the provided text"
+  certain_serial: "the proposal affects only certain airplanes of this model and the summary does not say which serial numbers"
+  no_serial_limit: "no serial limitation stated in the summary"
