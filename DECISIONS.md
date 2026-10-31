@@ -144,3 +144,27 @@ Deviations from docs/SPEC.md and choices made where it was ambiguous. One line e
 91. **The dense cache is `data/index/emb_sentences.npy`, `ids.json` and `emb_meta.json`.** The version hash covers the model name and every header-prefixed text. `make ingest` re-embeds only on a hash change (about 20 s on this laptop).
 92. **The app warms the Retriever in a FastAPI lifespan hook (about 5 s).** `ADTRACE_SKIP_WARM=1` skips it. Failures are reported in `/api/meta.embedding_backend`, never swallowed. Set `HF_HUB_OFFLINE=1` to avoid Hugging Face HEAD requests at startup once the model is cached.
 93. **The cross-encoder rerank is implemented behind `retrieval.rerank.enabled` (default false) and untested.** *Reason: the spec says optional and off by default; it adds a second model download.*
+
+## Prompt 7: query understanding, entity linking, gates (items marked REVIEW need a human decision)
+
+94. **REVIEW. No `temperature` is sent.** Claude Haiku 5.5 and Claude Sonnet 5.5 reject non-default sampling parameters with a 400, and API version 2026-10-21 rejects them on every model. Determinism (H11) comes from the sha256-keyed response cache, pinned model IDs and fixed prompts. `models.temperature` was removed from config.yaml.
+95. **REVIEW. Forced tool use only where the model allows it.** Claude Haiku 5.5 (the parser and verifier) gets `tool_choice: {type: "tool"}` with thinking disabled and effort low. Claude Sonnet 5.5 (the generator) returns a 400 on forced `tool_choice`, so it gets `tool_choice: auto` + `strict: true` + an explicit instruction, and a missing tool call counts as invalid output (retried once, then LLMError). Per-model options are in `config.yaml` `llm.model_options`.
+96. **Model IDs verified against Anthropic's current model list (cached 2026-10-06): `claude-sonnet-5-5` and `claude-haiku-5-5` are current.** Pricing in config: Haiku $0.10/$0.50, Sonnet $2/$10 per MTok (first-party list prices; the logged cost is an estimate).
+97. **Tool schemas are sent with `strict: true`.** `strict_schema()` inlines $refs and closes every object (`additionalProperties: false`, all properties required); nullable fields stay `anyOf [T, null]`.
+98. **Credentials:** the client loads `./.env` then `./data/.env` (existing env vars win) and refuses locally, without sending, any `ANTHROPIC_API_KEY` that does not start with `sk-ant-` or contains whitespace. The key is never logged; a test checks the call log and cache files.
+99. **REVIEW. Make linking deviates in two places from "token_set_ratio ≥ 90 accept":**
+    - an exact name/alias match wins outright;
+    - several makes ≥ 90 → AMBIGUOUS_MAKE ("Bell", "Gulfstream", "Rolls Royce");
+    - when the query has more words than a candidate name, the score is capped at `token_sort_ratio`, so "Lockheed Martin Skunk" no longer auto-accepts "Lockheed".
+
+    Cost: "boeing co" now asks for clarification (score 80).
+100. **REVIEW. A bare family with 2+ variants is AMBIGUOUS_MODEL even if the family string is itself a vocabulary entry** ("A330", "737", "A318"). An exact designator with at most one variant is accepted ("PW4090" vs "PW4090-3"). Options are capped at 12 and narrowed to the linked make's variants when that leaves any.
+101. **The empty query with no make/model uses NO_RETRIEVAL_HIT** (no dedicated code in SPEC); an empty query with UI make + model passes (lookup by configuration).
+102. **REVIEW. Out-of-scope keywords are skipped when the question asks what the proposal itself says** ("What does the proposal say about torque…" is in scope; R0001's summary mentions torque).
+103. **False premises:**
+     - "AD in the dataset" means it is mentioned in any sentence, cited by a supersedes/continues extraction, or in the AD Number column.
+     - The engine check runs only on records that *describe* the AD's applicability (supersede/continue or AD Number column).
+     - CONTRADICTS_RECORD only if every such record is NOT_APPLICABLE for the premise's make/model.
+     - Premises whose make/model can't be linked are left "unchecked", never refused.
+104. **Gate order: empty → injection → out of scope → entities → premises.** NO_RETRIEVAL_HIT and EMPTY_SOURCE_TEXT run after retrieval. LOW_RETRIEVAL_SCORE and APPLICABILITY_UNDETERMINED are explicit hooks that never stop yet (Prompt 10).
+105. **The FAKE LLM (`LLM_MODE=fake`) has a crude regex fallback for `parse_query`**, so the CLI works offline; tests always register their own outputs. The live test is marked `live` and deselected by default (`pytest -m live`).

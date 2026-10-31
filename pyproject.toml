@@ -6,6 +6,8 @@ requires-python = ">=3.11"
 [tool.pytest.ini_options]
 testpaths = ["backend/tests"]
 pythonpath = ["."]
+markers = ["live: calls the real Anthropic API (opt-in: pytest -m live)"]
+addopts = "-m 'not live'"
 
 [tool.ruff]
 line-length = 120

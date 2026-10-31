@@ -5,10 +5,25 @@ models:
   generation: claude-sonnet-5-5      # S6 generation
   query_parser: claude-haiku-5-5     # S1 query understanding
   verifier: claude-haiku-5-5         # S7 independent verifier (H6)
-  temperature: 0
-  max_tokens_generation: 1500
-  max_tokens_parser: 400
-  max_tokens_verifier: 200
+  # temperature is NOT sent: Claude Haiku 5.5 and Sonnet 5.5 reject non-default sampling parameters (400),
+  # and API version 2026-10-21 rejects them on every model. Determinism comes from the response cache (H11).
+  max_tokens_generation: 16000
+  max_tokens_parser: 2048
+  max_tokens_verifier: 1024
+
+llm:
+  timeout_s: 20
+  max_retries: 2                     # SDK retries 408/409/429/5xx and connection errors with backoff
+  validation_retries: 1              # one extra call when tool input fails Pydantic validation
+  # Per-model request options. Forced tool_choice returns 400 on Claude Sonnet 5.5, so that model gets
+  # tool_choice auto + strict tool schema + an explicit instruction, and a missing tool call is retried.
+  model_options:
+    claude-haiku-5-5: {forced_tool_choice: true, thinking: disabled, effort: low}
+    claude-sonnet-5-5: {forced_tool_choice: false, thinking: adaptive, effort: medium}
+  pricing_usd_per_mtok:              # first-party API list prices (input, output); cost is an estimate
+    claude-haiku-5-5: [0.10, 0.50]
+    claude-sonnet-5-5: [2.00, 10.00]
+  call_log: logs/llm_calls.jsonl
 
 embeddings:
   model: BAAI/bge-small-en-v1.5
