@@ -88,6 +88,10 @@ def ingest() -> None:
     run(PY, "-m", "backend.app.ingest.run")
 
 
+def eval_cmd(sub: str) -> None:
+    run(PY, "-m", "backend.app.eval", sub)
+
+
 def not_built(name: str) -> None:
     print(f"`{name}` is not implemented yet (backend pipeline is MOCK in Prompt 2).")
     sys.exit(1)
@@ -100,7 +104,11 @@ TASKS = {
     "test": test,
     "lint": lint,
     "ingest": ingest,
-    "eval": lambda: not_built("eval"),
+    "eval": lambda: eval_cmd("test"),
+    "eval-build": lambda: eval_cmd("build"),
+    "eval-dev": lambda: eval_cmd("dev"),
+    "eval-freeze": lambda: eval_cmd("freeze"),
+    "eval-test": lambda: eval_cmd("test"),
 }
 
 if __name__ == "__main__":

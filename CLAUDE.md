@@ -71,6 +71,8 @@ One sheet, 431 rows, 22 columns: Docket Number, Subject Heading, Status, CFR Par
 
 - `backend/app/pipeline/run.py`: `Pipeline.run(SearchRequest, Options)` S1-S8 with trace + audit (logs/audit.jsonl), `run_search`, `find_audit`; `records_api.py` builds RecordCard/RecordDetail/MetaResponse from SQLite. `scripts/demo_queries.py` = 10 real-data queries with latency + cost summary.
 
+- `backend/app/eval/`: cases.py (auto + manual draft cases, stratified split, manual_review.md parsing), harness.py (systems B1-B3/S0-S2 via pipeline Options, metrics with n + bootstrap CIs, dev threshold tuning, freeze/test discipline, results.json + docs/EVAL.md + claim_audit.csv), `python -m backend.app.eval {build|dev|freeze|test|report}` = make eval-build/eval-dev/eval-freeze/eval-test. NEVER tune on test; re-freeze deliberately before re-running test. `scripts/claim_audit_rate.py` = human-audited unsupported-claim rate.
+
 ## Progress log
 - Prompt 1: repo scaffold, CLAUDE.md, DECISIONS.md, frontend shell on MOCK data with dev scenario switcher.
 - Prompt 2: Pydantic schemas + generated TS types, FastAPI mock backend (all 8 endpoints, mock=true), UI wired to the API, pytest suite, `make dev` runs both servers.
@@ -82,3 +84,4 @@ One sheet, 431 rows, 22 columns: Docket Number, Subject Heading, Status, CFR Par
 - Prompt 8: evidence pack + computed facts, grounded Sonnet generation (fake-tested), extractive fallback + UI banner, retrieval fixes (within-record evidence ranking, match tiers); 329 tests. Live run BLOCKED on the same placeholder key.
 - Prompt 9: verification layers + 33-case adversarial suite (25 must-catch, 6 must-keep, 1 documented slip); 379 tests. Live verifier test BLOCKED on the placeholder key (now fails honestly instead of passing vacuously).
 - Prompt 10: end-to-end pipeline wired to API + UI, mock backend removed, audit log + /api/audit, demo script; 389 tests. All LLM stages currently run their fallbacks (placeholder key in data/.env).
+- Prompt 11: eval set (90 cases; 24 manual pending review), dev tuning, frozen single test run on 44 auto cases (answer quality NOT MEASURED: no key), EVAL.md with failures; 399 tests.

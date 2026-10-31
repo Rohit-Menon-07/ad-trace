@@ -20,3 +20,5 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.ruff.lint.per-file-ignores]
 # Tests embed verbatim REAL summary sentences; wrapping them would obscure the golden text.
 "backend/tests/*" = ["E501"]
+# Eval case table: verbatim source sentences from raw summaries.
+"backend/app/eval/cases.py" = ["E501"]

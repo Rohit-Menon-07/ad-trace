@@ -1,0 +1,227 @@
+{
+  "generated_at": "2026-10-31T07:14:32.550384+00:00",
+  "eval_set": {
+    "name": "AD Trace eval v1 (test split)",
+    "size": 44,
+    "synthetic": true,
+    "description": "44 test cases ({'auto': 44}); categories {'lookup': 7, 'model_applicability': 7, 'serial_unresolved': 2, 'supersession': 6, 'status': 3, 'unknown_entity': 3, 'ambiguous_family': 3, 'out_of_scope': 3, 'false_premise': 3, 'injection': 2, 'off_topic': 3, 'empty_summary': 2}. AUTO cases are generated from structured fields and are partly circular. 24 manual cases await human review and are excluded. LLM: no valid ANTHROPIC_API_KEY: generation, verifier, parser and judge fall back or are skipped."
+  },
+  "metric_defs": [
+    {
+      "key": "recall_at_5",
+      "label": "Recall@5",
+      "unit": "ratio",
+      "higher_is_better": true
+    },
+    {
+      "key": "mrr",
+      "label": "MRR",
+      "unit": "ratio",
+      "higher_is_better": true
+    },
+    {
+      "key": "status_accuracy",
+      "label": "Status accuracy",
+      "unit": "ratio",
+      "higher_is_better": true
+    },
+    {
+      "key": "refusal_f1",
+      "label": "Refusal F1",
+      "unit": "ratio",
+      "higher_is_better": true
+    },
+    {
+      "key": "false_refusal_rate",
+      "label": "False refusal rate",
+      "unit": "ratio",
+      "higher_is_better": false
+    },
+    {
+      "key": "fact_hit_rate",
+      "label": "Required facts present",
+      "unit": "ratio",
+      "higher_is_better": true
+    },
+    {
+      "key": "p95_retrieval_ms",
+      "label": "p95 retrieval",
+      "unit": "ms",
+      "higher_is_better": false
+    },
+    {
+      "key": "p95_e2e_ms",
+      "label": "p95 end-to-end",
+      "unit": "ms",
+      "higher_is_better": false
+    },
+    {
+      "key": "quote_pass_rate",
+      "label": "Quote check pass",
+      "unit": "ratio",
+      "higher_is_better": true
+    },
+    {
+      "key": "grounding_pass_rate",
+      "label": "Grounding pass",
+      "unit": "ratio",
+      "higher_is_better": true
+    },
+    {
+      "key": "verifier_pass_rate",
+      "label": "Verifier pass",
+      "unit": "ratio",
+      "higher_is_better": true
+    }
+  ],
+  "systems": [
+    {
+      "system": "B1 BM25 + extractive (keyword search, no LLM, no engine)",
+      "is_baseline": true,
+      "values": {
+        "recall_at_5": 1.0,
+        "mrr": 0.9277777777777778,
+        "status_accuracy": 0.5428571428571428,
+        "refusal_f1": 0.2727272727272727,
+        "false_refusal_rate": 0.0,
+        "fact_hit_rate": 0.0,
+        "p95_retrieval_ms": 7.579,
+        "p95_e2e_ms": 10.0
+      }
+    },
+    {
+      "system": "B2 dense + extractive (no LLM, no engine)",
+      "is_baseline": true,
+      "values": {
+        "recall_at_5": 0.6111111111111112,
+        "mrr": 0.47275132275132276,
+        "status_accuracy": 0.45714285714285713,
+        "refusal_f1": null,
+        "false_refusal_rate": 0.0,
+        "fact_hit_rate": 0.0,
+        "p95_retrieval_ms": 10.684999999999999,
+        "p95_e2e_ms": 13.0
+      }
+    },
+    {
+      "system": "B3 hybrid + extractive (no LLM, no engine)",
+      "is_baseline": true,
+      "values": {
+        "recall_at_5": 0.7777777777777778,
+        "mrr": 0.7777777777777778,
+        "status_accuracy": 0.45714285714285713,
+        "refusal_f1": null,
+        "false_refusal_rate": 0.0,
+        "fact_hit_rate": 0.0,
+        "p95_retrieval_ms": 18.2585,
+        "p95_e2e_ms": 21.0
+      }
+    },
+    {
+      "system": "S0 hybrid + generation, no verification, no engine (naive RAG)",
+      "is_baseline": false,
+      "values": {
+        "recall_at_5": 0.7777777777777778,
+        "mrr": 0.7777777777777778,
+        "status_accuracy": 0.45714285714285713,
+        "refusal_f1": null,
+        "false_refusal_rate": 0.0,
+        "fact_hit_rate": 0.0,
+        "p95_retrieval_ms": 18.826999999999998,
+        "p95_e2e_ms": 22.0
+      }
+    },
+    {
+      "system": "S1 = S0 + quote and grounding checks",
+      "is_baseline": false,
+      "values": {
+        "recall_at_5": 0.7777777777777778,
+        "mrr": 0.7777777777777778,
+        "status_accuracy": 0.45714285714285713,
+        "refusal_f1": null,
+        "false_refusal_rate": 0.0,
+        "fact_hit_rate": 0.0,
+        "p95_retrieval_ms": 18.950000000000003,
+        "p95_e2e_ms": 22.85
+      }
+    },
+    {
+      "system": "S2 full system: engine, gates, clarification, generation, all verification layers",
+      "is_baseline": false,
+      "values": {
+        "recall_at_5": 0.7222222222222222,
+        "mrr": 0.7380952380952381,
+        "status_accuracy": 0.9428571428571428,
+        "refusal_f1": 0.9473684210526315,
+        "false_refusal_rate": 0.0625,
+        "fact_hit_rate": 0.6666666666666666,
+        "p95_retrieval_ms": 17.722,
+        "p95_e2e_ms": 23.85
+      }
+    }
+  ],
+  "ablation": [
+    {
+      "system": "S0 hybrid + generation, no verification, no engine (naive RAG) [NOT MEASURED: no model-written answers]",
+      "is_baseline": false,
+      "values": {
+        "quote_pass_rate": null,
+        "grounding_pass_rate": null,
+        "verifier_pass_rate": null
+      }
+    },
+    {
+      "system": "S1 = S0 + quote and grounding checks [NOT MEASURED: no model-written answers]",
+      "is_baseline": false,
+      "values": {
+        "quote_pass_rate": null,
+        "grounding_pass_rate": null,
+        "verifier_pass_rate": null
+      }
+    },
+    {
+      "system": "S2 full system: engine, gates, clarification, generation, all verification layers [NOT MEASURED: no model-written answers]",
+      "is_baseline": false,
+      "values": {
+        "quote_pass_rate": null,
+        "grounding_pass_rate": null,
+        "verifier_pass_rate": null
+      }
+    }
+  ],
+  "failures": [
+    {
+      "id": "A-SER-03",
+      "query": "Do the proposed ADs apply to our A330-341 serial 1234?",
+      "expected": "{\"status\": \"refused\", \"reason_code\": \"APPLICABILITY_UNDETERMINED\"}",
+      "observed": "answered  top: ['R0061', 'R0046', 'R0037']",
+      "cause": "[missed_refusal] no gate fired; expected APPLICABILITY_UNDETERMINED. Fix: add or widen the gate for this pattern",
+      "user_signal": "SILENT: no warning shown; dangerous kind"
+    },
+    {
+      "id": "A-SUP-01",
+      "query": "Which proposal would supersede AD 2026-09-02?",
+      "expected": "{\"status\": \"answered\", \"expected_record_ids\": [\"R0002\"], \"required_fact_substrings\": [\"would supersede AD 2026-09-02\"]}",
+      "observed": "answered  top: ['R0051', 'R0005', 'R0149']",
+      "cause": "[record_missed] expected record not in the top 8 retrieved. Fix: retrieval (query wording, model linking, ranking tiers)",
+      "user_signal": "SILENT: no warning shown; dangerous kind"
+    },
+    {
+      "id": "A-STAT-05",
+      "query": "Is the comment period still open for the proposed AD on the 206L?",
+      "expected": "{\"status\": \"answered\", \"expected_record_ids\": [\"R0044\"], \"required_fact_substrings\": [\"comment period CLOSED (closed 2026-10-26)\"]}",
+      "observed": "needs_clarification AMBIGUOUS_MODEL top: []",
+      "cause": "[false_refusal] gate AMBIGUOUS_MODEL fired on an answerable question. Fix: narrow that gate (keyword list, thresholds or linking)",
+      "user_signal": "VISIBLE: the user sees a warning (refusal/UNDETERMINED/partial)"
+    },
+    {
+      "id": "A-SUP-06",
+      "query": "Which proposal would supersede AD 2015-07-03?",
+      "expected": "{\"status\": \"answered\", \"expected_record_ids\": [\"R0027\"], \"required_fact_substrings\": [\"would supersede AD 2015-07-03\"]}",
+      "observed": "answered  top: ['R0213', 'R0230', 'R0051']",
+      "cause": "[record_missed] expected record not in the top 8 retrieved. Fix: retrieval (query wording, model linking, ranking tiers)",
+      "user_signal": "SILENT: no warning shown; dangerous kind"
+    }
+  ],
+  "mock": false
+}

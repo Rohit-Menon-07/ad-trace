@@ -36,3 +36,4 @@ Thumbs.db
 .vscode/
 .idea/
 !frontend/.env.development
+data/eval/eval_audit.jsonl

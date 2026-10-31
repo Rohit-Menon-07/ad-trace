@@ -1,0 +1,4 @@
+{
+  "min_top_cosine": 0.62,
+  "min_top_bm25_norm": 0.9
+}

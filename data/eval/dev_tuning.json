@@ -1,0 +1,448 @@
+{
+  "n_dev_cases": 22,
+  "grid": [
+    {
+      "min_top_cosine": 0.5,
+      "min_top_bm25_norm": 0.8,
+      "f1": 0.9,
+      "false_refusals": 0,
+      "recall": 0.8181818181818182,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.5,
+      "min_top_bm25_norm": 0.85,
+      "f1": 0.9,
+      "false_refusals": 0,
+      "recall": 0.8181818181818182,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.5,
+      "min_top_bm25_norm": 0.88,
+      "f1": 0.9,
+      "false_refusals": 0,
+      "recall": 0.8181818181818182,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.5,
+      "min_top_bm25_norm": 0.9,
+      "f1": 0.9,
+      "false_refusals": 0,
+      "recall": 0.8181818181818182,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.5,
+      "min_top_bm25_norm": 0.92,
+      "f1": 0.9,
+      "false_refusals": 0,
+      "recall": 0.8181818181818182,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.5,
+      "min_top_bm25_norm": 0.95,
+      "f1": 0.9,
+      "false_refusals": 0,
+      "recall": 0.8181818181818182,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.55,
+      "min_top_bm25_norm": 0.8,
+      "f1": 0.9523809523809523,
+      "false_refusals": 0,
+      "recall": 0.9090909090909091,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.55,
+      "min_top_bm25_norm": 0.85,
+      "f1": 0.9523809523809523,
+      "false_refusals": 0,
+      "recall": 0.9090909090909091,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.55,
+      "min_top_bm25_norm": 0.88,
+      "f1": 0.9523809523809523,
+      "false_refusals": 0,
+      "recall": 0.9090909090909091,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.55,
+      "min_top_bm25_norm": 0.9,
+      "f1": 0.9523809523809523,
+      "false_refusals": 0,
+      "recall": 0.9090909090909091,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.55,
+      "min_top_bm25_norm": 0.92,
+      "f1": 0.9523809523809523,
+      "false_refusals": 0,
+      "recall": 0.9090909090909091,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.55,
+      "min_top_bm25_norm": 0.95,
+      "f1": 0.9523809523809523,
+      "false_refusals": 0,
+      "recall": 0.9090909090909091,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.58,
+      "min_top_bm25_norm": 0.8,
+      "f1": 0.9523809523809523,
+      "false_refusals": 0,
+      "recall": 0.9090909090909091,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.58,
+      "min_top_bm25_norm": 0.85,
+      "f1": 0.9523809523809523,
+      "false_refusals": 0,
+      "recall": 0.9090909090909091,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.58,
+      "min_top_bm25_norm": 0.88,
+      "f1": 1.0,
+      "false_refusals": 0,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.58,
+      "min_top_bm25_norm": 0.9,
+      "f1": 1.0,
+      "false_refusals": 0,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.58,
+      "min_top_bm25_norm": 0.92,
+      "f1": 1.0,
+      "false_refusals": 0,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.58,
+      "min_top_bm25_norm": 0.95,
+      "f1": 1.0,
+      "false_refusals": 0,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.6,
+      "min_top_bm25_norm": 0.8,
+      "f1": 0.9523809523809523,
+      "false_refusals": 0,
+      "recall": 0.9090909090909091,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.6,
+      "min_top_bm25_norm": 0.85,
+      "f1": 0.9523809523809523,
+      "false_refusals": 0,
+      "recall": 0.9090909090909091,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.6,
+      "min_top_bm25_norm": 0.88,
+      "f1": 1.0,
+      "false_refusals": 0,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.6,
+      "min_top_bm25_norm": 0.9,
+      "f1": 1.0,
+      "false_refusals": 0,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.6,
+      "min_top_bm25_norm": 0.92,
+      "f1": 1.0,
+      "false_refusals": 0,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.6,
+      "min_top_bm25_norm": 0.95,
+      "f1": 1.0,
+      "false_refusals": 0,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.62,
+      "min_top_bm25_norm": 0.8,
+      "f1": 0.9523809523809523,
+      "false_refusals": 0,
+      "recall": 0.9090909090909091,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.62,
+      "min_top_bm25_norm": 0.85,
+      "f1": 0.9523809523809523,
+      "false_refusals": 0,
+      "recall": 0.9090909090909091,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.62,
+      "min_top_bm25_norm": 0.88,
+      "f1": 1.0,
+      "false_refusals": 0,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.62,
+      "min_top_bm25_norm": 0.9,
+      "f1": 1.0,
+      "false_refusals": 0,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.62,
+      "min_top_bm25_norm": 0.92,
+      "f1": 1.0,
+      "false_refusals": 0,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.62,
+      "min_top_bm25_norm": 0.95,
+      "f1": 1.0,
+      "false_refusals": 0,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.64,
+      "min_top_bm25_norm": 0.8,
+      "f1": 0.9523809523809523,
+      "false_refusals": 0,
+      "recall": 0.9090909090909091,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.64,
+      "min_top_bm25_norm": 0.85,
+      "f1": 0.9523809523809523,
+      "false_refusals": 0,
+      "recall": 0.9090909090909091,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.64,
+      "min_top_bm25_norm": 0.88,
+      "f1": 1.0,
+      "false_refusals": 0,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.64,
+      "min_top_bm25_norm": 0.9,
+      "f1": 1.0,
+      "false_refusals": 0,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.64,
+      "min_top_bm25_norm": 0.92,
+      "f1": 1.0,
+      "false_refusals": 0,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.64,
+      "min_top_bm25_norm": 0.95,
+      "f1": 0.9565217391304348,
+      "false_refusals": 1,
+      "recall": 1.0,
+      "precision": 0.9166666666666666
+    },
+    {
+      "min_top_cosine": 0.66,
+      "min_top_bm25_norm": 0.8,
+      "f1": 0.9523809523809523,
+      "false_refusals": 0,
+      "recall": 0.9090909090909091,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.66,
+      "min_top_bm25_norm": 0.85,
+      "f1": 0.9523809523809523,
+      "false_refusals": 0,
+      "recall": 0.9090909090909091,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.66,
+      "min_top_bm25_norm": 0.88,
+      "f1": 1.0,
+      "false_refusals": 0,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.66,
+      "min_top_bm25_norm": 0.9,
+      "f1": 1.0,
+      "false_refusals": 0,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.66,
+      "min_top_bm25_norm": 0.92,
+      "f1": 1.0,
+      "false_refusals": 0,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.66,
+      "min_top_bm25_norm": 0.95,
+      "f1": 0.9166666666666666,
+      "false_refusals": 2,
+      "recall": 1.0,
+      "precision": 0.8461538461538461
+    },
+    {
+      "min_top_cosine": 0.68,
+      "min_top_bm25_norm": 0.8,
+      "f1": 0.9523809523809523,
+      "false_refusals": 0,
+      "recall": 0.9090909090909091,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.68,
+      "min_top_bm25_norm": 0.85,
+      "f1": 0.9523809523809523,
+      "false_refusals": 0,
+      "recall": 0.9090909090909091,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.68,
+      "min_top_bm25_norm": 0.88,
+      "f1": 1.0,
+      "false_refusals": 0,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.68,
+      "min_top_bm25_norm": 0.9,
+      "f1": 1.0,
+      "false_refusals": 0,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.68,
+      "min_top_bm25_norm": 0.92,
+      "f1": 1.0,
+      "false_refusals": 0,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.68,
+      "min_top_bm25_norm": 0.95,
+      "f1": 0.9166666666666666,
+      "false_refusals": 2,
+      "recall": 1.0,
+      "precision": 0.8461538461538461
+    },
+    {
+      "min_top_cosine": 0.7,
+      "min_top_bm25_norm": 0.8,
+      "f1": 0.9523809523809523,
+      "false_refusals": 0,
+      "recall": 0.9090909090909091,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.7,
+      "min_top_bm25_norm": 0.85,
+      "f1": 0.9523809523809523,
+      "false_refusals": 0,
+      "recall": 0.9090909090909091,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.7,
+      "min_top_bm25_norm": 0.88,
+      "f1": 1.0,
+      "false_refusals": 0,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.7,
+      "min_top_bm25_norm": 0.9,
+      "f1": 1.0,
+      "false_refusals": 0,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.7,
+      "min_top_bm25_norm": 0.92,
+      "f1": 1.0,
+      "false_refusals": 0,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    {
+      "min_top_cosine": 0.7,
+      "min_top_bm25_norm": 0.95,
+      "f1": 0.9166666666666666,
+      "false_refusals": 2,
+      "recall": 1.0,
+      "precision": 0.8461538461538461
+    }
+  ],
+  "chosen": {
+    "min_top_cosine": 0.62,
+    "min_top_bm25_norm": 0.9
+  },
+  "chosen_f1": 1.0,
+  "tied_settings": 24,
+  "previous": {
+    "min_top_cosine": 0.62,
+    "min_top_bm25_norm": 0.9
+  },
+  "rule": "max dev refusal F1; ties -> fewest false refusals; then closest to the previous placeholder"
+}

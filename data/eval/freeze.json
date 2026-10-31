@@ -1,0 +1,11 @@
+{
+  "cases_sha256": "50ccd6b403ec9e223b3101a06f49e6454e8df397d9f96e4821c60f1a53d04de4",
+  "manual_decisions_sha256": "da41e379b354c61b675274af3fae92d35c0f769fe531cdffb72b312eadd429d4",
+  "config_sha256": "94c4c6bdbd3af1a25dd808278c4a8dc613da394158e1ee0ac223600ac9acc13b",
+  "thresholds": {
+    "min_top_cosine": 0.62,
+    "min_top_bm25_norm": 0.9
+  },
+  "frozen_at": "2026-10-31T07:14:21.679434+00:00",
+  "manual_confirmed": 0
+}

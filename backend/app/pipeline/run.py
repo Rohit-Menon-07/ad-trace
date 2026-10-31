@@ -67,6 +67,10 @@ class Options:
     retrieval_mode: str | None = None
     low_retrieval: dict[str, float] | None = None
     audit: bool = True
+    # False = "no engine" variants (B1-B3, S0, S1): no gates, no hard filters (make/model are appended to the query
+    # text as a keyword-search user would type them), no verdicts and no computed facts.
+    engine: bool = True
+    llm_parser: bool = True  # False = rule-based parse only (no-LLM baselines)
 
 
 @dataclass
@@ -242,7 +246,9 @@ class Pipeline:
         t = time.perf_counter()
         parsed: ParsedQuery | None = None
         parse_source, parse_error = "none (empty query)", None
-        if query:
+        if query and not opts.llm_parser:
+            parsed, parse_source = rule_based_parse(query), "rule-based (no-LLM variant)"
+        elif query:
             try:
                 res = parse_query(query, self._client())
                 parsed = res.output  # type: ignore[assignment]
@@ -273,7 +279,7 @@ class Pipeline:
 
         # ---------------- S2 clarification + pre-retrieval gates
         t = time.perf_counter()
-        decision = run_pre_retrieval_gates(query, parsed, linked, self.linker)
+        decision = run_pre_retrieval_gates(query, parsed, linked, self.linker) if opts.engine else GateDecision(False)
         run.step(
             "S2 Clarification + pre-retrieval gates",
             "stop" if decision.stop else "ok",
@@ -303,6 +309,9 @@ class Pipeline:
             make=lc.make_canonical, model=lc.model_norm, date_from=linked.date_from, date_to=linked.date_to
         )
         retrieval_text = query or " ".join(x for x in (lc.make_canonical, lc.model_norm) if x)
+        if not opts.engine:  # keyword-search baseline: no linking-based filters; typed fields become query words
+            filters = Filters()
+            retrieval_text = " ".join(x for x in (query, req.make, req.model, req.serial) if x)
         mode = opts.retrieval_mode or cfg["retrieval"].get("mode", "hybrid")
         result = self.retriever.retrieve(retrieval_text, filters, mode)  # type: ignore[arg-type]
         run.retrieval_ms = result.timings_ms["total"]
@@ -335,6 +344,9 @@ class Pipeline:
         # ---------------- S4 engine
         t = time.perf_counter()
         pack_all = pack_records_from_retrieval(self.retriever, result, lc, k=len(result.records))
+        if not opts.engine:  # no verdicts, status or lineage: the pack carries evidence sentences only
+            for p in pack_all:
+                p.applicability = p.status = p.lineage = None
         verdicts = Counter(p.applicability.verdict for p in pack_all if p.applicability)
         remaining = [p for p in pack_all if not (p.applicability and p.applicability.verdict == "NOT_APPLICABLE")]
         for p in pack_all:
@@ -393,7 +405,9 @@ class Pipeline:
 
         # ---------------- S5 post-retrieval gates
         t = time.perf_counter()
-        decision = self._post_gates(remaining, result, mode, parsed, lc, opts, cfg)
+        decision = (
+            self._post_gates(remaining, result, mode, parsed, lc, opts, cfg) if opts.engine else GateDecision(False)
+        )
         run.step(
             "S5 Abstention gates",
             "stop" if decision.stop else "ok",
@@ -479,6 +493,9 @@ class Pipeline:
             f"{c['rationale_proposed']} steps kept.",
             t,
             claims_in=c["proposed"],
+            dropped_quotes=c["dropped_quotes"],
+            dropped_grounding=c["dropped_grounding"],
+            dropped_llm=c["dropped_llm"],
             claims_dropped=report.removed,
             layers=report.layers,
             verifier_error=report.verifier_error,

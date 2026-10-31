@@ -252,3 +252,31 @@ Deviations from docs/SPEC.md and choices made where it was ambiguous. One line e
      - `MetaResponse` gained `index_version` (source sha1 + dense hash); TS types regenerated.
 138. **The frontend dev presets are now the real demo queries** (no MOCK labels). The result card footer shows the request id and, in dev builds, a link to the audit record.
 139. **REVIEW. The demo's "serial constraint" uses PA-28-181 MSN 1234 (R0157/R0159, "certain" airplanes, no stated serials), because no record in the dataset states a serial range.** The "empty-summary record" query retrieves R0294 (rank 7) as a card. EMPTY_SOURCE_TEXT fires only if every remaining record lacks text, which no demo query produces (it is covered by unit tests).
+
+## Prompt 11: evaluation (items marked REVIEW need a human decision)
+
+140. **90 cases: 66 auto + 24 manual drafts; split 30/70 stratified by category, seed 20261031.**
+     - With manual cases pending, dev = 22 and test = 44 auto cases are used.
+     - Auto expectations come from the raw Model column, raw summary text and raw due dates. They are partly circular for model applicability (the engine reads the same column).
+141. **REVIEW. Serial applicability with resolved serials: 0 cases, because no summary states serials.** It was replaced by `serial_unresolved` (3 cases, serial given → APPLICABILITY_UNDETERMINED expected). An extra `off_topic` category (5) exists so the LOW_RETRIEVAL_SCORE thresholds have something to tune against.
+142. **REVIEW. LOW_RETRIEVAL_SCORE thresholds tuned on dev only (S2 with generation off, grid of 9 × 6): kept min_top_cosine 0.62, min_top_bm25_norm 0.90.**
+     - 24 of 54 settings tie at dev F1 = 1.0 with 0 false refusals; the tie-break chose the setting closest to the previous placeholder.
+     - The dev split (22 cases, few off-topic) cannot separate settings from about 0.58 to 0.66. Revisit with more off-topic and paraphrase cases.
+143. **Systems run through the same `Pipeline` with `Options`:**
+     - B1–B3 (engine off, generation off, rule-based parse);
+     - S0 (generation, no verification, no engine);
+     - S1 (+ quote/grounding);
+     - S2 (full).
+
+     "No engine" means no gates, no hard filters (make/model become query words) and no computed facts.
+144. **Freeze hashes cases.jsonl, the manual-review decisions and config.yaml + rules.yaml.** `eval-test` refuses if cases or decisions changed, and records whether the config changed. Every test run is appended to `test_runs.jsonl`. `python -m backend.app.eval report` regenerates EVAL.md from the saved results plus `analyst_notes.md` without re-running.
+145. **REVIEW. The test was run once (no valid key): every S0/S1/S2 answer was extractive.**
+     - Answer-quality metrics, the human-audited unsupported-claim rate and the LLM judge are reported as NOT MEASURED. claim_audit.csv has 0 rows.
+     - Re-run after adding a key and confirming manual cases (re-freeze first).
+146. **REVIEW. Two test labels are wrong (my auto-case construction), left as-is because the split is frozen:**
+     - A-STAT-05 used the family "206L" as a model; the system's clarification is correct.
+     - A-SER-03 assumed every A330-341 record says "certain"; R0061 and R0046 don't.
+
+     Documented in EVAL.md; fix in a v2 freeze.
+147. **REVIEW. A real silent failure was found on test and NOT fixed (fixing after seeing test would tune on test): hybrid RRF drops the BM25 rank-1 record for exact AD-number queries** (A-SUP-01, A-SUP-06). The proposed fix is an exact-identifier ranking tier, to be tuned on dev in the next iteration.
+148. **The LLM judge uses Sonnet (the generation model), not Haiku, so it is independent of the Haiku verifier.** It is a model and can be wrong; the headline is the human audit (`scripts/claim_audit_rate.py`, Wilson 95% CI).
