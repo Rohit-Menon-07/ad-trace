@@ -10,7 +10,7 @@ from typing import Any
 
 from backend.app.config import load_config, repo_path, resolve_as_of
 from backend.app.engine.data import EngineIndex
-from backend.app.engine.status import record_status
+from backend.app.engine.status import latest_in_group, record_status
 from backend.app.schemas import (
     CoverageReport,
     Extraction,
@@ -76,6 +76,8 @@ def _card_fields(
         "ad_number": ad,
         "retrieval_score": retrieval_score,
         "lineage": [e.model_dump() for e in lineage_edges(conn, rid)],
+        "docket_group_size": sum(1 for i in engine.by_docket[rec.docket] if not engine.records[i].is_duplicate),
+        "latest_in_docket_group": rid in latest_in_group(rec, engine) and not rec.is_duplicate,
     }
     return card, row
 

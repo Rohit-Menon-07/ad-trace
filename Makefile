@@ -2,7 +2,7 @@
 # (useful on Windows, where GNU make is often missing). Activate .venv first, or pass PY=...
 PY ?= python
 
-.PHONY: setup dev test lint types ingest eval eval-build eval-dev eval-freeze eval-test
+.PHONY: setup dev test lint types ingest eval eval-build eval-dev eval-freeze eval-test screens
 
 setup:
 	$(PY) scripts/tasks.py setup
@@ -36,3 +36,6 @@ eval-freeze:
 
 eval-test:
 	$(PY) scripts/tasks.py eval-test
+
+screens:
+	$(PY) scripts/tasks.py screens

@@ -23,6 +23,7 @@ from backend.app.pipeline.records_api import meta_response, record_detail
 from backend.app.pipeline.run import Pipeline, find_audit, set_pipeline
 from backend.app.schemas import (
     EvalResults,
+    ExampleQuery,
     FeedbackRequest,
     FeedbackResponse,
     HealthResponse,
@@ -124,6 +125,25 @@ def eval_latest() -> EvalResults:
     if not path.exists():
         raise HTTPException(status_code=404, detail="No evaluation results yet: run `make eval`.")
     return EvalResults.model_validate_json(path.read_text(encoding="utf-8"))
+
+
+@app.get("/api/examples", response_model=list[ExampleQuery])
+def examples() -> list[ExampleQuery]:
+    """'Try an example' inputs: one dev-split evaluation case per category (first by id), auto cases only.
+    Only the inputs are sent; answers always come from the live pipeline."""
+    from backend.app.eval.cases import CASES_PATH
+
+    if not CASES_PATH.exists():
+        return []
+    seen: dict[str, ExampleQuery] = {}
+    rows = [json.loads(x) for x in CASES_PATH.read_text(encoding="utf-8").splitlines() if x.strip()]
+    for c in sorted(rows, key=lambda c: c["id"]):
+        if c["split"] != "dev" or c["provenance"] != "auto" or c["category"] in seen:
+            continue
+        cfg = c["config"]
+        seen[c["category"]] = ExampleQuery(case_id=c["id"], category=c["category"], query=c["query"],
+                                           make=cfg["make"], model=cfg["model"], serial=cfg["serial"])  # fmt: skip
+    return list(seen.values())
 
 
 @app.post("/api/feedback", response_model=FeedbackResponse)

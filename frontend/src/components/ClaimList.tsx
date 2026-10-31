@@ -34,7 +34,7 @@ export function ClaimList({ claims, numbering, activeId, onOpen }: Props) {
                   key={cit.evidence_id}
                   n={numbering.get(cit.evidence_id) ?? '?'}
                   active={activeId === cit.evidence_id}
-                  target={{ evidenceId: cit.evidence_id, spanStart: cit.span_start, spanEnd: cit.span_end }}
+                  target={{ evidenceId: cit.evidence_id, spanStart: cit.span_start, spanEnd: cit.span_end, quote: cit.quote }}
                   onOpen={onOpen}
                 />
               ))}

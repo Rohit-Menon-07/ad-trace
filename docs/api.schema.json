@@ -223,6 +223,14 @@
           "title": "Ablation",
           "type": "array"
         },
+        "caveats": {
+          "description": "What the numbers do NOT show.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Caveats",
+          "type": "array"
+        },
         "eval_set": {
           "$ref": "#/$defs/EvalSet"
         },
@@ -264,6 +272,7 @@
         "systems",
         "ablation",
         "failures",
+        "caveats",
         "mock"
       ],
       "title": "EvalResults",
@@ -296,6 +305,67 @@
         "description"
       ],
       "title": "EvalSet",
+      "type": "object"
+    },
+    "ExampleQuery": {
+      "additionalProperties": false,
+      "description": "A query taken verbatim from the evaluation cases (inputs only; no expected answer is sent).",
+      "properties": {
+        "case_id": {
+          "title": "Case Id",
+          "type": "string"
+        },
+        "category": {
+          "title": "Category",
+          "type": "string"
+        },
+        "make": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Make"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Model"
+        },
+        "query": {
+          "title": "Query",
+          "type": "string"
+        },
+        "serial": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Serial"
+        }
+      },
+      "required": [
+        "case_id",
+        "category",
+        "query",
+        "make",
+        "model",
+        "serial"
+      ],
+      "title": "ExampleQuery",
       "type": "object"
     },
     "ExcludedRecord": {
@@ -674,9 +744,42 @@
     "MetricRow": {
       "additionalProperties": false,
       "properties": {
+        "ci95": {
+          "additionalProperties": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "array"
+          },
+          "description": "Bootstrap 95% interval [low, high] per metric, where computed.",
+          "title": "Ci95",
+          "type": "object"
+        },
         "is_baseline": {
           "title": "Is Baseline",
           "type": "boolean"
+        },
+        "n": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": "Cases behind each metric value.",
+          "title": "N",
+          "type": "object"
         },
         "system": {
           "title": "System",
@@ -700,7 +803,9 @@
       "required": [
         "system",
         "is_baseline",
-        "values"
+        "values",
+        "n",
+        "ci95"
       ],
       "title": "MetricRow",
       "type": "object"
@@ -770,6 +875,12 @@
           "title": "Docket",
           "type": "string"
         },
+        "docket_group_size": {
+          "default": 1,
+          "description": "Non-duplicate records sharing this docket (incl. this one).",
+          "title": "Docket Group Size",
+          "type": "integer"
+        },
         "fr_citation": {
           "title": "Fr Citation",
           "type": "string"
@@ -785,6 +896,12 @@
             }
           ],
           "title": "Issue Date"
+        },
+        "latest_in_docket_group": {
+          "default": true,
+          "description": "Latest citation publish date in its docket group (computed by the engine).",
+          "title": "Latest In Docket Group",
+          "type": "boolean"
         },
         "lineage": {
           "items": {
@@ -885,7 +1002,9 @@
         "url",
         "ad_number",
         "retrieval_score",
-        "lineage"
+        "lineage",
+        "docket_group_size",
+        "latest_in_docket_group"
       ],
       "title": "RecordCard",
       "type": "object"
@@ -986,6 +1105,12 @@
           "title": "Docket",
           "type": "string"
         },
+        "docket_group_size": {
+          "default": 1,
+          "description": "Non-duplicate records sharing this docket (incl. this one).",
+          "title": "Docket Group Size",
+          "type": "integer"
+        },
         "fr_citation": {
           "title": "Fr Citation",
           "type": "string"
@@ -1001,6 +1126,12 @@
             }
           ],
           "title": "Issue Date"
+        },
+        "latest_in_docket_group": {
+          "default": true,
+          "description": "Latest citation publish date in its docket group (computed by the engine).",
+          "title": "Latest In Docket Group",
+          "type": "boolean"
         },
         "lineage": {
           "items": {
@@ -1136,6 +1267,8 @@
         "ad_number",
         "retrieval_score",
         "lineage",
+        "docket_group_size",
+        "latest_in_docket_group",
         "summary",
         "summary_missing",
         "make_raw",

@@ -28,6 +28,7 @@ export function FeedbackButton({ requestId }: { requestId: string }) {
       <input id="flag-reason" value={reason} onChange={(e) => setReason(e.target.value)} required className="min-w-48 flex-1 rounded border border-slate-400 bg-transparent px-2 py-1 text-sm" />
       <button type="submit" disabled={m.isPending} className="rounded border border-slate-700 px-2 py-1 text-sm">Send</button>
       <button type="button" onClick={() => setOpen(false)} className="px-2 py-1 text-sm underline">Cancel</button>
+      {m.isError && <p role="alert" className="w-full text-sm">Flag not recorded: {m.error.message}. Note the request id {requestId} instead.</p>}
     </form>
   );
 }

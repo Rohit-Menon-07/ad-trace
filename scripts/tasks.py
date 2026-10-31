@@ -1,6 +1,6 @@
 """Cross-platform task runner behind the Makefile (GNU make is not available on every dev box).
 
-    python scripts/tasks.py {setup,dev,test,lint,types,ingest,eval}
+    python scripts/tasks.py {setup,dev,test,lint,types,ingest,eval,screens}
 
 `make <target>` calls exactly this, so running the script directly is equivalent.
 """
@@ -92,6 +92,49 @@ def eval_cmd(sub: str) -> None:
     run(PY, "-m", "backend.app.eval", sub)
 
 
+def _wait_http(url: str, timeout: float = 180.0) -> None:
+    import time
+    import urllib.request
+
+    end = time.time() + timeout
+    while time.time() < end:
+        try:
+            with urllib.request.urlopen(url, timeout=2) as r:
+                if r.status == 200:
+                    return
+        except OSError:
+            time.sleep(0.5)
+    sys.exit(f"timed out waiting for {url}")
+
+
+def screens() -> None:
+    """Playwright screenshots of answered / refused / needs_clarification (real pipeline, whatever LLM key is
+    configured) and partial (FAKE LLM fixture, shown with a MOCK badge) into docs/screens/."""
+    import os
+
+    port, ui = 8010, 4173
+    env = {**os.environ, "ADTRACE_API": f"http://127.0.0.1:{port}"}
+    run(NPM, "run", "build", cwd=FRONTEND)
+    preview = subprocess.Popen(
+        [NPM, "run", "preview", "--", "--host", "127.0.0.1", "--port", str(ui), "--strictPort"], cwd=FRONTEND, env=env
+    )
+    try:
+        for fake_llm, states in (
+            (False, ["answered", "refused", "needs_clarification", "coverage", "evaluation"]),
+            (True, ["partial"]),
+        ):
+            cmd = [PY, "scripts/screenshot_backend.py", "--port", str(port)] + (["--fake-llm"] if fake_llm else [])
+            backend = subprocess.Popen(cmd, cwd=ROOT)
+            try:
+                _wait_http(f"http://127.0.0.1:{port}/api/health")
+                _wait_http(f"http://127.0.0.1:{ui}/")
+                run("node", "scripts/screenshots.mjs", f"http://127.0.0.1:{ui}/", *states, cwd=FRONTEND)
+            finally:
+                stop_tree(backend)
+    finally:
+        stop_tree(preview)
+
+
 def not_built(name: str) -> None:
     print(f"`{name}` is not implemented yet (backend pipeline is MOCK in Prompt 2).")
     sys.exit(1)
@@ -109,6 +152,7 @@ TASKS = {
     "eval-dev": lambda: eval_cmd("dev"),
     "eval-freeze": lambda: eval_cmd("freeze"),
     "eval-test": lambda: eval_cmd("test"),
+    "screens": screens,
 }
 
 if __name__ == "__main__":

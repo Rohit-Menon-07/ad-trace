@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from './api/client';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { MockBadge } from './components/MockBadge';
 import { CoveragePage } from './pages/CoveragePage';
 import { EvaluationPage } from './pages/EvaluationPage';
@@ -16,14 +17,21 @@ const PAGES: { id: Page; label: string }[] = [
 
 export default function App() {
   const [page, setPage] = useState<Page>('search');
-  const [dark, setDark] = useState(() => window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const [dark, setDark] = useState(() => {
+    const saved = window.localStorage.getItem('adtrace-theme');
+    return saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark);
+    window.localStorage.setItem('adtrace-theme', dark ? 'dark' : 'light');
   }, [dark]);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <a href="#main" className="sr-only rounded bg-white px-3 py-2 text-sm font-semibold focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 dark:bg-slate-900">
+        Skip to content
+      </a>
       <header className="border-b border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-900">
         <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-4 px-4 py-3">
           <h1 className="text-lg font-bold tracking-tight">AD Trace</h1>
@@ -52,10 +60,12 @@ export default function App() {
           </button>
         </div>
       </header>
-      <main className="mx-auto max-w-[1500px] p-4">
-        {page === 'search' && <SearchPage />}
-        {page === 'coverage' && <CoveragePage />}
-        {page === 'evaluation' && <EvaluationPage />}
+      <main id="main" tabIndex={-1} className="mx-auto max-w-[1500px] p-4 focus:outline-none">
+        <ErrorBoundary resetKey={page}>
+          {page === 'search' && <SearchPage />}
+          {page === 'coverage' && <CoveragePage />}
+          {page === 'evaluation' && <EvaluationPage />}
+        </ErrorBoundary>
       </main>
     </div>
   );

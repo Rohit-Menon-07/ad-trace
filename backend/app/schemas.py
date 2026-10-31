@@ -129,6 +129,10 @@ class RecordCard(ApiModel):
     ad_number: str | None
     retrieval_score: float | None = Field(description="Fused RRF score. Computed, never LLM-reported (H12).")
     lineage: list[LineageEdge]
+    docket_group_size: int = Field(1, description="Non-duplicate records sharing this docket (incl. this one).")
+    latest_in_docket_group: bool = Field(
+        True, description="Latest citation publish date in its docket group (computed by the engine)."
+    )
 
 
 class ExcludedRecord(ApiModel):
@@ -258,6 +262,10 @@ class MetricRow(ApiModel):
     system: str
     is_baseline: bool
     values: dict[str, float | None]
+    n: dict[str, int | None] = Field(default_factory=dict, description="Cases behind each metric value.")
+    ci95: dict[str, list[float | None]] = Field(
+        default_factory=dict, description="Bootstrap 95% interval [low, high] per metric, where computed."
+    )
 
 
 class FailureCase(ApiModel):
@@ -276,7 +284,19 @@ class EvalResults(ApiModel):
     systems: list[MetricRow]
     ablation: list[MetricRow]
     failures: list[FailureCase]
+    caveats: list[str] = Field(default_factory=list, description="What the numbers do NOT show.")
     mock: bool = False
+
+
+class ExampleQuery(ApiModel):
+    """A query taken verbatim from the evaluation cases (inputs only; no expected answer is sent)."""
+
+    case_id: str
+    category: str
+    query: str
+    make: str | None
+    model: str | None
+    serial: str | None
 
 
 # ---- Small responses ----

@@ -29,6 +29,7 @@ OUTPUT_MODELS: list[type[BaseModel]] = [
     s.RecordDetail,
     s.MetaResponse,
     s.EvalResults,
+    s.ExampleQuery,
     s.HealthResponse,
     s.FeedbackResponse,
 ]

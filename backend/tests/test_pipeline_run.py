@@ -230,3 +230,18 @@ def test_audit_record_contents_and_no_key(pipe: Pipeline, monkeypatch) -> None:
         assert key in entry, key
     assert entry["evidence_pack"].startswith("<evidence>") and entry["generation"]["raw_output"]["claims"]
     assert entry["latency_ms"]["retrieval"] > 0 and entry["verification"]["counts"]["kept"] == 1
+
+
+def test_fake_generation_is_labelled_mock_and_drop_reasons_are_traced(pipe: Pipeline) -> None:
+    fake.register("submit_answer", fake_answer(good_only=False))
+    fake.register("verify_claims", supported)
+    r = pipe.run(SearchRequest(**A330))
+    assert r.mock is True  # a FAKE output wrote the answer: the UI must show MOCK
+    s7 = next(t for t in r.trace if t.stage.startswith("S7"))
+    (d,) = s7.details["dropped"]
+    assert d["layer"] == "quotes" and d["reasons"] and "replacing every RMP" in d["claim"]
+
+
+def test_extractive_answer_is_not_mock(pipe: Pipeline) -> None:
+    r = pipe.run(SearchRequest(**A330, mode="search_only"))
+    assert r.mock is False

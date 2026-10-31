@@ -122,3 +122,25 @@ def test_cors_allows_vite_dev_server(client) -> None:
     res = client.options("/api/search", headers={"Origin": "http://localhost:5173",
                                                  "Access-Control-Request-Method": "POST"})  # fmt: skip
     assert res.headers.get("access-control-allow-origin") == "http://localhost:5173"
+
+
+def test_examples_come_from_dev_eval_cases(client) -> None:
+    from backend.app.eval.cases import CASES_PATH
+
+    if not CASES_PATH.exists():
+        pytest.skip("eval cases not built")
+    rows = {json.loads(x)["id"]: json.loads(x) for x in CASES_PATH.read_text(encoding="utf-8").splitlines()}
+    ex = client.get("/api/examples").json()
+    assert len(ex) >= 8 and len({e["category"] for e in ex}) == len(ex)
+    for e in ex:
+        c = rows[e["case_id"]]
+        assert c["split"] == "dev" and c["provenance"] == "auto" and e["query"] == c["query"]
+        assert set(e) == {"case_id", "category", "query", "make", "model", "serial"}  # inputs only, no answers
+
+
+def test_record_cards_carry_docket_group_status(client) -> None:
+    body = {"query": "radio management panel", "make": "Airbus SAS", "model": "A330-243", "as_of": "2026-10-31",
+            "mode": "search_only"}  # fmt: skip
+    resp = SearchResponse.model_validate(client.post("/api/search", json=body).json())
+    card = next(r for r in resp.records if r.record_id == "R0003")
+    assert card.docket_group_size >= 1 and isinstance(card.latest_in_docket_group, bool)

@@ -1,7 +1,7 @@
 {
   "generated_at": "2026-10-31T07:47:59.717800+00:00",
   "eval_set": {
-    "name": "AD Trace eval v1 (test split)",
+    "name": "AD Trace eval v2 (test split, re-frozen)",
     "size": 44,
     "synthetic": true,
     "description": "44 test cases ({'auto': 44}); categories {'lookup': 7, 'model_applicability': 7, 'serial_unresolved': 2, 'supersession': 6, 'status': 3, 'unknown_entity': 3, 'ambiguous_family': 3, 'out_of_scope': 3, 'false_premise': 3, 'injection': 2, 'off_topic': 3, 'empty_summary': 2}. AUTO cases are generated from structured fields and are partly circular. 24 manual cases await human review and are excluded. LLM: no valid ANTHROPIC_API_KEY: generation, verifier, parser and judge fall back or are skipped."
@@ -87,6 +87,34 @@
         "fact_hit_rate": 0.0,
         "p95_retrieval_ms": 15.4575,
         "p95_e2e_ms": 18.0
+      },
+      "n": {
+        "recall_at_5": 18,
+        "mrr": 18,
+        "status_accuracy": 35,
+        "refusal_f1": 35,
+        "false_refusal_rate": 16,
+        "fact_hit_rate": 9,
+        "p95_retrieval_ms": 44,
+        "p95_e2e_ms": 44
+      },
+      "ci95": {
+        "recall_at_5": [
+          1.0,
+          1.0
+        ],
+        "mrr": [
+          0.8111111111111112,
+          1.0
+        ],
+        "status_accuracy": [
+          0.37142857142857144,
+          0.7142857142857143
+        ],
+        "refusal_f1": [
+          0.0,
+          0.5
+        ]
       }
     },
     {
@@ -101,6 +129,34 @@
         "fact_hit_rate": 0.0,
         "p95_retrieval_ms": 11.235000000000001,
         "p95_e2e_ms": 13.850000000000001
+      },
+      "n": {
+        "recall_at_5": 18,
+        "mrr": 18,
+        "status_accuracy": 35,
+        "refusal_f1": 35,
+        "false_refusal_rate": 16,
+        "fact_hit_rate": 9,
+        "p95_retrieval_ms": 44,
+        "p95_e2e_ms": 44
+      },
+      "ci95": {
+        "recall_at_5": [
+          0.3888888888888889,
+          0.8333333333333334
+        ],
+        "mrr": [
+          0.27879960317460317,
+          0.6719907407407407
+        ],
+        "status_accuracy": [
+          0.3135714285714286,
+          0.6285714285714286
+        ],
+        "refusal_f1": [
+          0.0,
+          0.0
+        ]
       }
     },
     {
@@ -115,6 +171,34 @@
         "fact_hit_rate": 0.0,
         "p95_retrieval_ms": 26.653,
         "p95_e2e_ms": 30.0
+      },
+      "n": {
+        "recall_at_5": 18,
+        "mrr": 18,
+        "status_accuracy": 35,
+        "refusal_f1": 35,
+        "false_refusal_rate": 16,
+        "fact_hit_rate": 9,
+        "p95_retrieval_ms": 44,
+        "p95_e2e_ms": 44
+      },
+      "ci95": {
+        "recall_at_5": [
+          0.7222222222222222,
+          1.0
+        ],
+        "mrr": [
+          0.7222222222222222,
+          1.0
+        ],
+        "status_accuracy": [
+          0.3135714285714286,
+          0.6285714285714286
+        ],
+        "refusal_f1": [
+          0.0,
+          0.0
+        ]
       }
     },
     {
@@ -129,6 +213,34 @@
         "fact_hit_rate": 0.0,
         "p95_retrieval_ms": 26.351,
         "p95_e2e_ms": 30.0
+      },
+      "n": {
+        "recall_at_5": 18,
+        "mrr": 18,
+        "status_accuracy": 35,
+        "refusal_f1": 35,
+        "false_refusal_rate": 16,
+        "fact_hit_rate": 9,
+        "p95_retrieval_ms": 44,
+        "p95_e2e_ms": 44
+      },
+      "ci95": {
+        "recall_at_5": [
+          0.7222222222222222,
+          1.0
+        ],
+        "mrr": [
+          0.7222222222222222,
+          1.0
+        ],
+        "status_accuracy": [
+          0.3135714285714286,
+          0.6285714285714286
+        ],
+        "refusal_f1": [
+          0.0,
+          0.0
+        ]
       }
     },
     {
@@ -143,6 +255,34 @@
         "fact_hit_rate": 0.0,
         "p95_retrieval_ms": 26.078500000000002,
         "p95_e2e_ms": 30.0
+      },
+      "n": {
+        "recall_at_5": 18,
+        "mrr": 18,
+        "status_accuracy": 35,
+        "refusal_f1": 35,
+        "false_refusal_rate": 16,
+        "fact_hit_rate": 9,
+        "p95_retrieval_ms": 44,
+        "p95_e2e_ms": 44
+      },
+      "ci95": {
+        "recall_at_5": [
+          0.7222222222222222,
+          1.0
+        ],
+        "mrr": [
+          0.7222222222222222,
+          1.0
+        ],
+        "status_accuracy": [
+          0.3135714285714286,
+          0.6285714285714286
+        ],
+        "refusal_f1": [
+          0.0,
+          0.0
+        ]
       }
     },
     {
@@ -157,6 +297,34 @@
         "fact_hit_rate": 1.0,
         "p95_retrieval_ms": 26.941,
         "p95_e2e_ms": 32.85
+      },
+      "n": {
+        "recall_at_5": 18,
+        "mrr": 18,
+        "status_accuracy": 35,
+        "refusal_f1": 35,
+        "false_refusal_rate": 16,
+        "fact_hit_rate": 9,
+        "p95_retrieval_ms": 30,
+        "p95_e2e_ms": 44
+      },
+      "ci95": {
+        "recall_at_5": [
+          0.6111111111111112,
+          1.0
+        ],
+        "mrr": [
+          0.671957671957672,
+          1.0
+        ],
+        "status_accuracy": [
+          1.0,
+          1.0
+        ],
+        "refusal_f1": [
+          1.0,
+          1.0
+        ]
       }
     }
   ],
@@ -168,7 +336,13 @@
         "quote_pass_rate": null,
         "grounding_pass_rate": null,
         "verifier_pass_rate": null
-      }
+      },
+      "n": {
+        "quote_pass_rate": null,
+        "grounding_pass_rate": null,
+        "verifier_pass_rate": null
+      },
+      "ci95": {}
     },
     {
       "system": "S1 = S0 + quote and grounding checks [NOT MEASURED: no model-written answers]",
@@ -177,7 +351,13 @@
         "quote_pass_rate": null,
         "grounding_pass_rate": null,
         "verifier_pass_rate": null
-      }
+      },
+      "n": {
+        "quote_pass_rate": null,
+        "grounding_pass_rate": null,
+        "verifier_pass_rate": null
+      },
+      "ci95": {}
     },
     {
       "system": "S2 full system: engine, gates, clarification, generation, all verification layers [NOT MEASURED: no model-written answers]",
@@ -186,9 +366,46 @@
         "quote_pass_rate": null,
         "grounding_pass_rate": null,
         "verifier_pass_rate": null
-      }
+      },
+      "n": {
+        "quote_pass_rate": null,
+        "grounding_pass_rate": null,
+        "verifier_pass_rate": null
+      },
+      "ci95": {}
     }
   ],
-  "failures": [],
+  "failures": [
+    {
+      "id": "M-09 (UNCONFIRMED manual case)",
+      "query": "Does the tail boom vibration proposal apply to our Bell 206L-4?",
+      "expected": "see data/eval/manual_review.md (not yet confirmed by a human)",
+      "observed": "answered",
+      "cause": "[verdict_UNDETERMINED_as_APPLICABLE] engine rule serial.none: model matches and no serial-number limitation is stated in the summary",
+      "user_signal": "SILENT: no warning shown; dangerous kind"
+    },
+    {
+      "id": "M-17 (UNCONFIRMED manual case)",
+      "query": "Does the PSU video monitor proposal apply to the 737-900ER?",
+      "expected": "see data/eval/manual_review.md (not yet confirmed by a human)",
+      "observed": "answered",
+      "cause": "[record_missed] expected record not in the top 8 retrieved",
+      "user_signal": "SILENT: no warning shown; dangerous kind"
+    },
+    {
+      "id": "M-17 (UNCONFIRMED manual case)",
+      "query": "Does the PSU video monitor proposal apply to the 737-900ER?",
+      "expected": "see data/eval/manual_review.md (not yet confirmed by a human)",
+      "observed": "answered",
+      "cause": "[verdict_APPLICABLE_as_UNDETERMINED] engine rule model.series_overlap: the record names the 737-900 series; the summary does not say whether 737-900ER belongs to it",
+      "user_signal": "VISIBLE: the user sees a warning (refusal/UNDETERMINED/partial)"
+    }
+  ],
+  "caveats": [
+    "The test split was re-run after fixes motivated by the v1 test failures: these numbers are an optimistic re-test, not an unbiased held-out estimate (see docs/EVAL.md, analyst notes).",
+    "AUTO cases are generated from structured fields and are partly circular. Manual cases are not yet confirmed by a human; they appear only as failure cases labelled UNCONFIRMED.",
+    "Answer quality is NOT MEASURED in this run (no valid ANTHROPIC_API_KEY: generation, verifier, parser and judge fall back or are skipped).",
+    "No user study: time savings are not measured."
+  ],
   "mock": false
 }

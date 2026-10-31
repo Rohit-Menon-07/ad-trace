@@ -703,6 +703,7 @@ def run_test() -> dict[str, Any]:
                     "kind": f["kind"],
                     "visible": f["visible"],
                     "query": f["case"]["query"],
+                    "expected": json.dumps({k: v for k, v in f["case"]["expected"].items() if v}),
                     "observed": f"{f['out']['status']} {f['out']['reason_code'] or ''}".strip(),
                     "cause": f["cause"],
                 }
@@ -760,7 +761,24 @@ def to_results(d: dict[str, Any], worst: list[dict[str, Any]]) -> EvalResults:
             "p95_retrieval_ms": m["latency"]["p95_retrieval_ms"],
             "p95_e2e_ms": m["latency"]["p95_e2e_ms"],
         }
-        rows.append(MetricRow(system=m["label"], is_baseline=key.startswith("B"), values=vals))
+        r = m["refusal"]
+        n = {
+            "recall_at_5": m["n_retrieval_cases"],
+            "mrr": m["n_retrieval_cases"],
+            "status_accuracy": m["n_status_cases"],
+            "refusal_f1": r["n"],
+            "false_refusal_rate": r["false_refusal_n"],
+            "fact_hit_rate": m["n_fact_cases"],
+            "p95_retrieval_ms": m["latency"]["n_retrieval"],
+            "p95_e2e_ms": m["latency"]["n_e2e"],
+        }
+        ci = {
+            "recall_at_5": list(m["recall_at_5_ci"]),
+            "mrr": list(m["mrr_ci"]),
+            "status_accuracy": list(m["status_accuracy_ci"]),
+            "refusal_f1": list(r["f1_ci"]),
+        }
+        rows.append(MetricRow(system=m["label"], is_baseline=key.startswith("B"), values=vals, n=n, ci95=ci))
         if key.startswith("S"):
             aq = m["answer_quality"]
             ablation.append(
@@ -768,6 +786,9 @@ def to_results(d: dict[str, Any], worst: list[dict[str, Any]]) -> EvalResults:
                     system=m["label"] + ("" if aq["measured"] else " [NOT MEASURED: no model-written answers]"),
                     is_baseline=False,
                     values={k: aq.get(k) for k in ("quote_pass_rate", "grounding_pass_rate", "verifier_pass_rate")},
+                    n=dict.fromkeys(
+                        ("quote_pass_rate", "grounding_pass_rate", "verifier_pass_rate"), aq.get("claims_proposed")
+                    ),  # fmt: skip
                 )
             )
     fcs = [
@@ -785,6 +806,22 @@ def to_results(d: dict[str, Any], worst: list[dict[str, Any]]) -> EvalResults:
         )
         for f in worst
     ]
+    um = d.get("unconfirmed_manual") or {}
+    fcs += [
+        FailureCase(
+            id=f"{f['id']} (UNCONFIRMED manual case)",
+            query=f["query"],
+            expected=f.get("expected") or "see data/eval/manual_review.md (not yet confirmed by a human)",
+            observed=f["observed"],
+            cause=f"[{f['kind']}] {f['cause']}",
+            user_signal=(
+                "VISIBLE: the user sees a warning (refusal/UNDETERMINED/partial)"
+                if f["visible"]
+                else "SILENT: no warning shown; dangerous kind"
+            ),
+        )
+        for f in um.get("failures", [])
+    ]
     desc = (
         f"{d['n_test_cases']} test cases ({d['provenance']}); categories {d['categories']}. AUTO cases are generated "
         f"from structured fields and are partly circular. {d['manual_pending']} manual cases await human review and "
@@ -793,12 +830,20 @@ def to_results(d: dict[str, Any], worst: list[dict[str, Any]]) -> EvalResults:
     return EvalResults(
         generated_at=d["generated_at"],
         eval_set=EvalSet(
-            name="AD Trace eval v1 (test split)", size=d["n_test_cases"], synthetic=True, description=desc
+            name="AD Trace eval v2 (test split, re-frozen)", size=d["n_test_cases"], synthetic=True, description=desc
         ),
         metric_defs=METRICS,
         systems=rows,
         ablation=ablation,
         failures=fcs,
+        caveats=[
+            "The test split was re-run after fixes motivated by the v1 test failures: these numbers are an "
+            "optimistic re-test, not an unbiased held-out estimate (see docs/EVAL.md, analyst notes).",
+            "AUTO cases are generated from structured fields and are partly circular. Manual cases are not yet "
+            "confirmed by a human; they appear only as failure cases labelled UNCONFIRMED.",
+            f"Answer quality is NOT MEASURED in this run ({d['llm']['why']}).",
+            "No user study: time savings are not measured.",
+        ],
         mock=False,
     )
 
@@ -990,10 +1035,11 @@ def eval_md(d: dict[str, Any], worst: list[dict[str, Any]]) -> str:
 
 
 def regenerate_report() -> None:
-    """Rebuild docs/EVAL.md from results_detail.json + data/eval/analyst_notes.md, without re-running the test."""
+    """Rebuild docs/EVAL.md and results.json from results_detail.json + analyst notes, without re-running the test."""
     d = json.loads(DETAIL_PATH.read_text(encoding="utf-8"))
     worst = [_detail_failure(f) for f in d["failures"] if f"{f['id']}:{f['kind']}" in d["worst5"]]
     EVAL_MD.write_text(eval_md(d, worst), encoding="utf-8", newline="\n")
+    RESULTS_PATH.write_text(to_results(d, worst).model_dump_json(indent=2) + "\n", encoding="utf-8", newline="\n")
 
 
 def _detail_failure(f: dict[str, Any]) -> dict[str, Any]:

@@ -4,6 +4,7 @@
 
 import type {
   EvalResults,
+  ExampleQuery,
   FeedbackRequest,
   FeedbackResponse,
   HealthResponse,
@@ -47,5 +48,6 @@ export const api = {
   search: (req: SearchRequest) => post<SearchResponse>('/api/search', req),
   record: (recordId: string) => request<RecordDetail>(`/api/records/${encodeURIComponent(recordId)}`),
   evalLatest: () => request<EvalResults>('/api/eval/latest'),
+  examples: () => request<ExampleQuery[]>('/api/examples'),
   feedback: (body: FeedbackRequest) => post<FeedbackResponse>('/api/feedback', body),
 };

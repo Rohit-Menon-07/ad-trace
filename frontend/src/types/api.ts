@@ -60,6 +60,8 @@ export interface EvalResults {
   systems: MetricRow[];
   ablation: MetricRow[];
   failures: FailureCase[];
+  /** What the numbers do NOT show. */
+  caveats: string[];
   mock: boolean;
 }
 
@@ -68,6 +70,16 @@ export interface EvalSet {
   size: number;
   synthetic: boolean;
   description: string;
+}
+
+/** A query taken verbatim from the evaluation cases (inputs only; no expected answer is sent). */
+export interface ExampleQuery {
+  case_id: string;
+  category: string;
+  query: string;
+  make: string | null;
+  model: string | null;
+  serial: string | null;
 }
 
 export interface ExcludedRecord {
@@ -152,6 +164,10 @@ export interface MetricRow {
   system: string;
   is_baseline: boolean;
   values: Record<string, number | null>;
+  /** Cases behind each metric value. */
+  n: Record<string, number | null>;
+  /** Bootstrap 95% interval [low, high] per metric, where computed. */
+  ci95: Record<string, (number | null)[]>;
 }
 
 export interface ModelIds {
@@ -184,6 +200,10 @@ export interface RecordCard {
   /** Fused RRF score. Computed, never LLM-reported (H12). */
   retrieval_score: number | null;
   lineage: LineageEdge[];
+  /** Non-duplicate records sharing this docket (incl. this one). */
+  docket_group_size: number;
+  /** Latest citation publish date in its docket group (computed by the engine). */
+  latest_in_docket_group: boolean;
 }
 
 export interface RecordDetail {
@@ -218,6 +238,10 @@ export interface RecordFull {
   /** Fused RRF score. Computed, never LLM-reported (H12). */
   retrieval_score: number | null;
   lineage: LineageEdge[];
+  /** Non-duplicate records sharing this docket (incl. this one). */
+  docket_group_size: number;
+  /** Latest citation publish date in its docket group (computed by the engine). */
+  latest_in_docket_group: boolean;
   summary: string;
   summary_missing: boolean;
   make_raw: string;

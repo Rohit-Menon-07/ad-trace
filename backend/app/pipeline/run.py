@@ -110,6 +110,7 @@ class Run:
                     "cost_usd": res.cost_usd,
                     "cached": res.cached,
                     "latency_ms": round(res.latency_ms, 1),
+                    "fake": res.request_id == "fake",
                 }
             )
 
@@ -199,7 +200,8 @@ class Pipeline:
             disclaimer=DISCLAIMER,
             as_of=run.req.as_of or resolve_as_of(),
             latency_ms=int(round(total_ms)),
-            mock=False,
+            # LLM_MODE=fake: a canned FAKE output wrote or checked the answer, so the response is labelled MOCK.
+            mock=any(c.get("fake") and c["purpose"] in ("generate", "verify") for c in run.llm),
         )
         if opts is None or opts.audit:
             self._write_audit(run, resp, total_ms)
@@ -497,6 +499,15 @@ class Pipeline:
             dropped_grounding=c["dropped_grounding"],
             dropped_llm=c["dropped_llm"],
             claims_dropped=report.removed,
+            dropped=[
+                {
+                    "claim": c.claim.text,
+                    "layer": c.dropped_by,
+                    "reasons": {"quotes": c.quotes, "grounding": c.grounding, "llm": c.verifier}[c.dropped_by].reasons,
+                }
+                for c in report.claims
+                if c.dropped_by
+            ],  # fmt: skip
             layers=report.layers,
             verifier_error=report.verifier_error,
             answer_mode=gen.mode,
