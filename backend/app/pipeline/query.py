@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from datetime import date
 from pathlib import Path
 from typing import Literal
@@ -67,6 +68,35 @@ def parse_query(query: str, client: LLMClient | None = None) -> LLMResult:
         tool_description="Record the structured fields of the engineer's question. Never answer it.",
         output_model=ParsedQuery,
         max_tokens_key="max_tokens_parser",
+    )
+
+
+_RB_MODEL = re.compile(r"\b[A-Z]{1,4}-?\d{2,4}(?:-[0-9A-Z]+)*\b")
+_RB_AD = re.compile(r"\b(?:AD\s+)?(\d{2,4}-\d{2}-\d{2,3})\b")
+_RB_SERIAL = re.compile(r"\b(?:MSN|S/N|serial(?:\s+number)?)\s*:?\s*([A-Z]{0,3}-?\d{2,6})\b", re.IGNORECASE)
+
+
+def rule_based_parse(query: str) -> ParsedQuery:
+    """Degraded S1 when the parser LLM is unavailable: copies designator-like tokens, AD numbers and serials only.
+    Linking (H8) still validates everything; out-of-scope / injection / premise checks have their own code rules."""
+    from backend.app.pipeline.checks import heuristic_premises
+
+    model = _RB_MODEL.search(query)
+    ad = _RB_AD.search(query)
+    serial = _RB_SERIAL.search(query)
+    return ParsedQuery(
+        intent="applicability" if serial else "lookup",
+        make_text=None,
+        model_text=model.group(0) if model else None,
+        serial_text=serial.group(1) if serial else None,
+        ad_number_text=ad.group(1) if ad else None,
+        date_from=None,
+        date_to=None,
+        asks_out_of_scope=False,
+        out_of_scope_kind="none",
+        asserted_premises=heuristic_premises(query),
+        injection_suspected=False,
+        free_text=query,
     )
 
 

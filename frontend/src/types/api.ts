@@ -135,6 +135,8 @@ export interface MetaResponse {
   as_of: ISODate;
   models: ModelIds;
   embedding_backend: string;
+  /** sha1 of the source workbook + dense index version hash (prefixes). */
+  index_version: string;
   coverage: CoverageReport;
   mock: boolean;
 }

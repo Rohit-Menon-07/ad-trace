@@ -84,11 +84,11 @@ class PremiseCheck:
     reasons: list[str] = field(default_factory=list)
 
 
-def check_premises(parsed: Any, linker: Linker, as_of: date) -> list[PremiseCheck]:
+def check_premises(parsed: Any, linker: Linker, as_of: date, text: str = "") -> list[PremiseCheck]:
     """For each premise naming an AD: unknown AD -> unknown_ad; engine says NOT_APPLICABLE on every record that
     describes that AD -> contradicts. Premises whose make/model cannot be linked are left unchecked."""
     out: list[PremiseCheck] = []
-    for prem in getattr(parsed, "asserted_premises", []) or []:
+    for prem in merged_premises(parsed, text):
         if not prem.ad_number_text:
             continue
         m = re.search(r"\d{2,4}\s?-\s?\d{2}\s?-\s?\d{2,3}", prem.ad_number_text)
@@ -134,6 +134,44 @@ def check_premises(parsed: Any, linker: Linker, as_of: date) -> list[PremiseChec
                     ad, prem.claim_text, "consistent", subjects, [f"{rid}: {v.verdict}" for rid, v in verdicts.items()]
                 )
             )
+    return out
+
+
+_PREMISE = re.compile(
+    r"\b(?:since|because|given that|as|now that)\s+(?:the\s+)?(?:AD\s+)?(?P<ad>\d{2,4}\s?-\s?\d{2}\s?-\s?\d{2,3})\s+"
+    r"(?:applies|apply|is applicable|covers|affects)\s+to\s+(?:the\s+|our\s+|my\s+|all\s+)?"
+    r"(?P<model>[A-Z][A-Z0-9]*-?\d[A-Z0-9-]*|\d{3}(?:-[0-9A-Z]+)*)",
+    re.IGNORECASE,
+)
+
+
+def heuristic_premises(text: str) -> list[Any]:
+    """Code-side premise detection ("since AD X applies to MODEL"): runs with or without the parser LLM, so a
+    false premise is still caught when the parser is unavailable. Returns query.Premise objects."""
+    from backend.app.pipeline.query import Premise
+
+    out = []
+    for m in _PREMISE.finditer(text or ""):
+        out.append(
+            Premise(
+                make_text=None,
+                model_text=m.group("model"),
+                ad_number_text=m.group("ad"),
+                claim_text=f"AD {norm_ad(m.group('ad'))} applies to {m.group('model')}",
+            )
+        )
+    return out
+
+
+def merged_premises(parsed: Any, text: str) -> list[Any]:
+    """Parser premises plus code-detected ones (deduplicated by AD number + model)."""
+    seen = set()
+    out = []
+    for p in list(getattr(parsed, "asserted_premises", []) or []) + heuristic_premises(text):
+        key = (norm_ad(p.ad_number_text or ""), (p.model_text or "").upper())
+        if key not in seen:
+            seen.add(key)
+            out.append(p)
     return out
 
 

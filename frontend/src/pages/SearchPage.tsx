@@ -12,7 +12,7 @@ import type { SearchRequest } from '../types/api';
 const EMPTY_REQUEST: SearchRequest = { query: '', make: null, model: null, serial: null, as_of: null, mode: 'answer' };
 
 export function SearchPage() {
-  // With the dev flag on, the page opens on the first MOCK preset; otherwise on an empty form.
+  // With the dev flag on, the page opens on the first dev preset (real data); otherwise on an empty form.
   const initial = SCENARIO_SWITCHER_ENABLED ? DEFAULT_PRESET.request : EMPTY_REQUEST;
   const [form, setForm] = useState<SearchRequest>(initial);
   const [submitted, setSubmitted] = useState<SearchRequest | null>(SCENARIO_SWITCHER_ENABLED ? initial : null);

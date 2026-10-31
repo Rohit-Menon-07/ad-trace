@@ -131,8 +131,8 @@ def gate_entities(linked: LinkedQuery, record_count: int) -> GateDecision:
     return PASS
 
 
-def gate_premises(parsed: Any, linked: LinkedQuery, linker: Linker) -> GateDecision:
-    for chk in check_premises(parsed, linker, linked.as_of):
+def gate_premises(parsed: Any, linked: LinkedQuery, linker: Linker, query: str = "") -> GateDecision:
+    for chk in check_premises(parsed, linker, linked.as_of, query):
         if chk.status == "unknown_ad":
             return refuse(
                 "UNKNOWN_ENTITY",
@@ -197,7 +197,7 @@ def run_pre_retrieval_gates(query: str, parsed: Any, linked: LinkedQuery, linker
         lambda: gate_injection(query, parsed),
         lambda: gate_out_of_scope(query, parsed),
         lambda: gate_entities(linked, linker.record_count),
-        lambda: gate_premises(parsed, linked, linker),
+        lambda: gate_premises(parsed, linked, linker, query),
     ):
         decision = gate()
         if decision.stop:

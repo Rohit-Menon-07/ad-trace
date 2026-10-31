@@ -16,6 +16,7 @@ export function CoveragePage() {
         </p>
         <p className="text-xs text-slate-600 dark:text-slate-400">
           Models: generation {data.models.generation}; parser {data.models.query_parser}; verifier {data.models.verifier}.
+          {' '}Index <span className="font-mono">{data.index_version}</span>.
         </p>
       </header>
       <section aria-labelledby="cov-h" className="rounded border border-slate-300 p-4 dark:border-slate-700">

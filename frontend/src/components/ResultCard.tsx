@@ -97,6 +97,17 @@ export function ResultCard({ response, activeId, onOpen, onClarify }: Props) {
         <ExcludedPanel excluded={response.excluded} />
         <WhyPanel trace={response.trace} rationale={response.rationale_steps} numbering={numbering} activeId={activeId} onOpen={onOpen} />
         <FeedbackButton key={response.request_id} requestId={response.request_id} />
+        <footer className="border-t border-slate-200 pt-2 text-xs text-slate-600 dark:border-slate-800 dark:text-slate-400">
+          Request id <span className="font-mono">{response.request_id}</span> · as of {response.as_of} · {response.latency_ms} ms
+          {import.meta.env.DEV && (
+            <>
+              {' · '}
+              <a className="underline" href={`/api/audit/${response.request_id}`} target="_blank" rel="noreferrer">
+                audit record
+              </a>
+            </>
+          )}
+        </footer>
       </div>
     </article>
   );

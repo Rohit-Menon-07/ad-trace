@@ -1,6 +1,6 @@
 // Single data-access layer: typed fetch wrappers for the FastAPI backend (SPEC §7).
 // Requests go to /api/*, which Vite proxies to http://localhost:8000 in dev.
-// Whether data is MOCK is decided by the backend and signalled by `mock: true` in payloads.
+// Payloads carry `mock: false` from the real pipeline; `mock: true` (test fixtures only) shows a MOCK tag.
 
 import type {
   EvalResults,

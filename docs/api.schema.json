@@ -601,6 +601,11 @@
           "title": "Embedding Backend",
           "type": "string"
         },
+        "index_version": {
+          "description": "sha1 of the source workbook + dense index version hash (prefixes).",
+          "title": "Index Version",
+          "type": "string"
+        },
         "mock": {
           "default": false,
           "title": "Mock",
@@ -625,6 +630,7 @@
         "as_of",
         "models",
         "embedding_backend",
+        "index_version",
         "coverage",
         "mock"
       ],

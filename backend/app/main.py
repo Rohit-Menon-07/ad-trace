@@ -1,7 +1,7 @@
-"""FastAPI app for AD Trace (docs/SPEC.md section 7).
+"""FastAPI app for AD Trace (docs/SPEC.md section 7). Every endpoint serves real data from the ingested DB.
 
-Prompt 2 state: search, records, vocab and meta are served from backend/app/mocks.py and every
-payload carries mock=True. Feedback is real (appended to logs/feedback.jsonl).
+Startup warms the pipeline once: SQLite + FTS5, engine index, entity vocabulary, embedding model and dense matrix.
+POST /api/search never returns 500 for an LLM failure: the pipeline degrades (rule-based parse, extractive answer).
 """
 
 from __future__ import annotations
@@ -12,19 +12,21 @@ import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
+from typing import Any
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.app import mocks
 from backend.app.config import load_config, repo_path, resolve_as_of
+from backend.app.ingest.makes import make_family
+from backend.app.pipeline.records_api import meta_response, record_detail
+from backend.app.pipeline.run import Pipeline, find_audit, set_pipeline
 from backend.app.schemas import (
     EvalResults,
     FeedbackRequest,
     FeedbackResponse,
     HealthResponse,
     MetaResponse,
-    ModelIds,
     RecordDetail,
     SearchRequest,
     SearchResponse,
@@ -35,40 +37,33 @@ log = logging.getLogger("adtrace")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Warm the retriever (FTS, engine index, embedding model, dense matrix) once at startup."""
-    app.state.retriever = None
-    app.state.retriever_error = None
-    db = repo_path("sqlite_path")
+    """Warm the whole pipeline once at startup. Failures are reported via /api/health and /api/meta."""
+    app.state.pipeline = None
+    app.state.startup_error = None
     if os.environ.get("ADTRACE_SKIP_WARM") != "1":
+        db = repo_path("sqlite_path")
         if db.exists():
             try:
-                from backend.app.retrieval.retriever import Retriever
+                set_pipeline(Pipeline(db))
+                from backend.app.pipeline.run import get_pipeline
 
-                app.state.retriever = Retriever(db)
-                log.info("retriever warm: %s", app.state.retriever.dense.backend)
-            except Exception as exc:  # never fail silently: reported in /api/meta
-                app.state.retriever_error = f"{type(exc).__name__}: {exc}"
-                log.exception("retriever failed to load")
+                app.state.pipeline = get_pipeline()
+                log.info("pipeline warm: %s", app.state.pipeline.retriever.dense.backend)
+            except Exception as exc:  # never fail silently
+                app.state.startup_error = f"{type(exc).__name__}: {exc}"
+                log.exception("pipeline failed to load")
         else:
-            app.state.retriever_error = f"{db} not found: run `make ingest`"
+            app.state.startup_error = f"{db} not found: run `make ingest`"
     yield
 
 
 app = FastAPI(
     title="AD Trace API",
-    version="0.3.0",
-    description="Traceable search over FAA AD proposals (NPRMs). MOCK search: responses carry mock=true.",
+    version="1.0.0",
+    description="Traceable search over FAA AD proposals (NPRMs): rules decide applicability, the model only "
+    "phrases, every claim is verified and cited.",
     lifespan=lifespan,
 )
-
-
-def embedding_backend() -> str:
-    retriever = getattr(app.state, "retriever", None)
-    if retriever is not None:
-        return retriever.dense.backend
-    return f"not loaded ({getattr(app.state, 'retriever_error', None) or 'startup warm-up not run'})"
-
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
@@ -77,56 +72,58 @@ app.add_middleware(
 )
 
 
+def pipeline() -> Pipeline:
+    p = getattr(app.state, "pipeline", None)
+    if p is None:
+        raise HTTPException(503, detail=getattr(app.state, "startup_error", None) or "pipeline not loaded")
+    return p
+
+
 @app.get("/api/health", response_model=HealthResponse)
 def health() -> HealthResponse:
-    return HealthResponse(status="ok", mock=True)
+    pipeline()
+    return HealthResponse(status="ok", mock=False)
 
 
 @app.get("/api/meta", response_model=MetaResponse)
 def meta() -> MetaResponse:
-    cfg = load_config()["models"]
-    return MetaResponse(
-        dataset="AD Notice of Proposed Rulemaking (AD NPRM).xlsx",
-        total_records=431,
-        unique_dockets=323,
-        as_of=resolve_as_of(),
-        models=ModelIds(generation=cfg["generation"], query_parser=cfg["query_parser"], verifier=cfg["verifier"]),
-        embedding_backend=embedding_backend(),
-        coverage=mocks.MOCK_COVERAGE,
-        mock=True,
-    )
+    p = pipeline()
+    return meta_response(p.retriever.conn, p.retriever.dense.backend)
 
 
 @app.get("/api/vocab/makes", response_model=list[str])
 def vocab_makes() -> list[str]:
-    return mocks.MOCK_MAKES
+    return sorted(pipeline().linker.makes, key=str.casefold)
 
 
 @app.get("/api/vocab/models", response_model=list[str])
 def vocab_models(make: str = Query(..., min_length=1)) -> list[str]:
-    return mocks.MOCK_MODELS.get(make, [])
+    linker = pipeline().linker
+    if make not in linker.makes:
+        return []
+    fam = make_family(make)
+    return sorted((m for m, fams in linker.model_makes.items() if fam in fams), key=str.casefold)
 
 
 @app.post("/api/search", response_model=SearchResponse)
 def search(req: SearchRequest) -> SearchResponse:
-    return mocks.mock_search(req)
+    return pipeline().run(req)
 
 
 @app.get("/api/records/{record_id}", response_model=RecordDetail)
 def record(record_id: str) -> RecordDetail:
-    detail = mocks.MOCK_RECORDS.get(record_id)
-    if detail is None:
+    p = pipeline()
+    if record_id not in p.retriever.engine.records:
         raise HTTPException(status_code=404, detail=f"Record {record_id} not found")
-    return detail
+    return record_detail(p.retriever.conn, p.retriever.engine, record_id, resolve_as_of())
 
 
 @app.get("/api/eval/latest", response_model=EvalResults)
 def eval_latest() -> EvalResults:
-    """Serve data/eval/results.json once `make eval` has produced it; until then the MOCK placeholder."""
     path = repo_path("eval_results")
-    if path.exists():
-        return EvalResults.model_validate_json(path.read_text(encoding="utf-8"))
-    return mocks.MOCK_EVAL
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="No evaluation results yet: run `make eval`.")
+    return EvalResults.model_validate_json(path.read_text(encoding="utf-8"))
 
 
 @app.post("/api/feedback", response_model=FeedbackResponse)
@@ -136,4 +133,15 @@ def feedback(body: FeedbackRequest) -> FeedbackResponse:
     entry = {"ts": datetime.now(UTC).isoformat(), "request_id": body.request_id, "reason": body.reason}
     with path.open("a", encoding="utf-8") as fh:
         fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
-    return FeedbackResponse(ok=True, mock=body.request_id.startswith("MOCK-"))
+    return FeedbackResponse(ok=True, mock=False)
+
+
+@app.get("/api/audit/{request_id}")
+def audit(request_id: str) -> dict[str, Any]:
+    """Dev-only (config dev.audit_endpoint): the full audit record of one request."""
+    if not load_config().get("dev", {}).get("audit_endpoint", False):
+        raise HTTPException(status_code=404, detail="audit endpoint disabled")
+    entry = find_audit(request_id, pipeline().audit_path)
+    if entry is None:
+        raise HTTPException(status_code=404, detail=f"No audit record for {request_id}")
+    return entry

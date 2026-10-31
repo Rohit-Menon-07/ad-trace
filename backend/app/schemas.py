@@ -232,6 +232,7 @@ class MetaResponse(ApiModel):
     as_of: date
     models: ModelIds
     embedding_backend: str
+    index_version: str = Field(description="sha1 of the source workbook + dense index version hash (prefixes).")
     coverage: CoverageReport
     mock: bool = False
 

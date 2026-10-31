@@ -6,7 +6,12 @@ import { MockBadge } from '../components/MockBadge';
 export function EvaluationPage() {
   const { data, isPending, error } = useQuery({ queryKey: ['eval'], queryFn: api.evalLatest });
   if (isPending) return <p className="text-sm">Loading evaluation…</p>;
-  if (error) return <p className="text-sm">Could not load evaluation: {String(error)}</p>;
+  if (error)
+    return (
+      <p className="rounded border-2 border-amber-500 p-3 text-sm">
+        No evaluation results yet ({String(error)}). Run <code>make eval</code> to produce data/eval/results.json.
+      </p>
+    );
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <header className="space-y-2">

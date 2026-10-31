@@ -225,3 +225,30 @@ Deviations from docs/SPEC.md and choices made where it was ambiguous. One line e
 
      `to_api_claims()` emits only kept claims with `verification="verified"`. A fact citation uses `evidence_id = "<record>#F<n>"`, so the drawer opens the record.
 125. **The live adversarial test now asserts that a real, uncached verifier call happened.** The first version passed vacuously with the placeholder key, because fail-closed verification dropped every claim and the test only checked that no semantic case was kept.
+
+## Prompt 10: end-to-end pipeline (items marked REVIEW need a human decision)
+
+126. **`backend/app/pipeline/run.py` runs S1–S8 with one code-built TraceStep per stage.** Every exit path goes through `_finish()`, which adds S8 and writes one audit line. `run_search()` uses a module singleton, warmed by the FastAPI lifespan hook.
+127. **REVIEW. LLM failures degrade, never error:**
+     - The parser falls back to `rule_based_parse()` (designators, AD numbers and serials by regex; linking still validates them).
+     - Generation falls back to the extractive answer.
+     - A verifier error on an LLM answer also falls back to the extractive answer.
+
+     Each fallback is a warn trace step plus a message prefix. With the placeholder key, every live request currently takes these paths.
+128. **REVIEW. A code-side premise rule ("since/because/given that AD X applies to MODEL") is merged with the parser's premises.** False premises are therefore caught without the LLM (demo query 6).
+129. **REVIEW. LOW_RETRIEVAL_SCORE thresholds are placeholders** (top cosine < 0.62 and top BM25-norm < 0.90 in hybrid mode; per-signal in bm25/dense modes). They come from 8 on-topic vs 8 off-topic queries; Prompt 11 tunes them. The gate is skipped whenever a retrieved record lists the requested aircraft (tier 0), so a lookup by configuration is never refused as "weak".
+130. **APPLICABILITY_UNDETERMINED fires when the parser intent is `applicability` or a serial is given, and every remaining record is UNDETERMINED.** It returns `refused` but still includes the records and applicability rows, so the user sees why.
+131. **REVIEW. If every retrieved record is NOT_APPLICABLE, the response is `refused` with NO_RETRIEVAL_HIT.** The message says the records were excluded by rules; they are listed in `excluded`. A model `cannot_answer` also maps to NO_RETRIEVAL_HIT (no dedicated code in SPEC).
+132. **`excluded` holds NOT_APPLICABLE records (rule `S4.<engine rule>`) and hard-filter removals (rule `S3.hard_filter.<name>`, at most 20 per filter plus a "+N more records" row).** The applicability table lists every retrieved record, including NOT_APPLICABLE ones; `records` (cards) lists only those shown.
+133. **search_only and generation=off skip S6 generation.** S7 still runs its deterministic layers on the verbatim answer (it computes the highlight spans), and the trace says "Deterministic layers only".
+134. **The evidence pack holds the top `generation.pack_records` (4) shown records.** Lower-ranked records, e.g. R0294 at rank 7, appear as cards without quotes.
+135. **Ablation flags live in config.yaml:**
+     - `generation.enabled`, `verify.*`, `retrieval.mode`, `thresholds.low_retrieval`.
+     - Per-request overrides only via `pipeline.run.Options` (eval code); the API always uses config.
+136. **Audit: one JSON line per request in `logs/audit.jsonl`.** It holds the request, parsed query and source, linked entities, filters, retrieved ids and scores, features, engine verdicts, the exact evidence pack, computed facts, raw generation output, verification report, status/reason, model IDs, LLM calls with tokens/cost, and per-stage latencies. No keys (tested). `GET /api/audit/{request_id}` is behind `dev.audit_endpoint`.
+137. **The mock backend is removed.**
+     - `backend/app/mocks.py` moved to `backend/tests/fixtures/mock_scenarios.py` (schema tests only).
+     - `/api/eval/latest` returns 404 until `make eval` writes results.
+     - `MetaResponse` gained `index_version` (source sha1 + dense hash); TS types regenerated.
+138. **The frontend dev presets are now the real demo queries** (no MOCK labels). The result card footer shows the request id and, in dev builds, a link to the audit record.
+139. **REVIEW. The demo's "serial constraint" uses PA-28-181 MSN 1234 (R0157/R0159, "certain" airplanes, no stated serials), because no record in the dataset states a serial range.** The "empty-summary record" query retrieves R0294 (rank 7) as a card. EMPTY_SOURCE_TEXT fires only if every remaining record lacks text, which no demo query produces (it is covered by unit tests).

@@ -2,8 +2,9 @@ from typing import get_args
 
 import pytest
 
-from backend.app import export_types, mocks
+from backend.app import export_types
 from backend.app.schemas import RecordDetail, SearchResponse
+from backend.tests.fixtures import mock_scenarios as mocks
 
 
 @pytest.mark.parametrize("key", list(get_args(mocks.ScenarioKey)))
