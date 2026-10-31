@@ -60,9 +60,12 @@ One sheet, 431 rows, 22 columns: Docket Number, Subject Heading, Status, CFR Par
 
 - `backend/app/engine/`: PURE-code S4. `data.load_index(db)` → EngineIndex of frozen EngineRecords (~20 ms); `applicability.evaluate(LinkedConfig, record)` → verdict/rule/reasons/evidence_ids/basis; `status.record_status` / `status.lineage`. Rules and reason texts in `configs/rules.yaml`. Safety invariant: NOT_APPLICABLE only on HIGH/MEDIUM basis (property + sweep tests). Match kinds add SERIES_OVERLAP and SPELLING_VARIANT (→ UNDETERMINED). CLI `python -m backend.app.engine.explain --record R0003 --make "Airbus SAS" --model A330-243 [--serial] [--as-of] [--bench]`. All 431 records in ~2.5 ms.
 
+- `backend/app/retrieval/`: fts.py (FTS5 sentences_fts/records_fts, `sanitize()`), dense.py (BGE bge-small-en-v1.5 cached in data/index with version hash; loud TF-IDF fallback, `ADTRACE_EMBEDDINGS=tfidf`), retriever.py (`Retriever(db).retrieve(query, Filters, mode, k)`: engine-mirroring hard filters with removal reports, sentence BM25 + dense, RRF k=60, record aggregation, evidence = top-3 + engine anchor sentences, retrieval features), search.py CLI (`--bench`, `--compare`). Built by `make ingest`; warmed in the FastAPI lifespan. Hybrid p95 ~14 ms.
+
 ## Progress log
 - Prompt 1: repo scaffold, CLAUDE.md, DECISIONS.md, frontend shell on MOCK data with dev scenario switcher.
 - Prompt 2: Pydantic schemas + generated TS types, FastAPI mock backend (all 8 endpoints, mock=true), UI wired to the API, pytest suite, `make dev` runs both servers.
 - Prompt 3: ingestion + cleaning into SQLite, make alias map + audit, duplicate-docket audit, sentence splitter, 85 tests.
 - Prompt 4: rule-based extraction with provenance (25 rule_ids, golden REAL + SYNTHETIC tests), lineage edges, coverage report, spot-check CSV; `make ingest` runs ingest+extract idempotently; 139 tests.
 - Prompt 5: deterministic applicability/status/lineage engine + explain CLI; 34 synthetic + 20 real verdict cases, safety-invariant property tests; 213 tests.
+- Prompt 6: hybrid retrieval (FTS5 + BGE + RRF), engine-consistent filters, evidence selection, CLI + latency bench; 255 tests.

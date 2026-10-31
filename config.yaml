@@ -13,6 +13,21 @@ models:
 embeddings:
   model: BAAI/bge-small-en-v1.5
   fallback: tfidf_char_ngrams        # used if the model cannot be downloaded; reported in /api/meta
+  query_instruction: "Represent this sentence for searching relevant passages: "
+  header_max_models: 10              # models listed in the "Make Model | Subject Heading: " header
+  batch_size: 64
+
+retrieval:
+  # bm25() column weights, in FTS column order. Higher = more important.
+  fts_sentence_weights: {sentence_text: 1.0, subject_heading: 0.4, make: 0.3, models: 1.2, models_norm: 2.0}
+  fts_record_weights: {subject_heading: 1.0, make: 0.3, models: 1.2, summary: 0.8, models_norm: 2.0}
+  bm25_depth: 200                    # sentences taken from each ranking into the fusion
+  dense_depth: 200
+  extra_sentence_bonus: 0.02         # record score = best fused + bonus * (sum of next 2 fused scores); RRF steps are ~0.0003 per rank, so keep this small (tuned in Prompt 11)
+  evidence_top_sentences: 3
+  rerank:
+    enabled: false                   # optional cross-encoder rerank of the top records
+    model: cross-encoder/ms-marco-MiniLM-L-6-v2
 
 data:
   raw_xlsx: "data/raw/AD Notice of Proposed Rulemaking (AD NPRM).xlsx"

@@ -7,6 +7,10 @@ payload carries mock=True. Feedback is real (appended to logs/feedback.jsonl).
 from __future__ import annotations
 
 import json
+import logging
+import os
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 
 from fastapi import FastAPI, HTTPException, Query
@@ -26,11 +30,44 @@ from backend.app.schemas import (
     SearchResponse,
 )
 
+log = logging.getLogger("adtrace")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Warm the retriever (FTS, engine index, embedding model, dense matrix) once at startup."""
+    app.state.retriever = None
+    app.state.retriever_error = None
+    db = repo_path("sqlite_path")
+    if os.environ.get("ADTRACE_SKIP_WARM") != "1":
+        if db.exists():
+            try:
+                from backend.app.retrieval.retriever import Retriever
+
+                app.state.retriever = Retriever(db)
+                log.info("retriever warm: %s", app.state.retriever.dense.backend)
+            except Exception as exc:  # never fail silently: reported in /api/meta
+                app.state.retriever_error = f"{type(exc).__name__}: {exc}"
+                log.exception("retriever failed to load")
+        else:
+            app.state.retriever_error = f"{db} not found: run `make ingest`"
+    yield
+
+
 app = FastAPI(
     title="AD Trace API",
-    version="0.2.0",
-    description="Traceable search over FAA AD proposals (NPRMs). MOCK backend: all responses carry mock=true.",
+    version="0.3.0",
+    description="Traceable search over FAA AD proposals (NPRMs). MOCK search: responses carry mock=true.",
+    lifespan=lifespan,
 )
+
+
+def embedding_backend() -> str:
+    retriever = getattr(app.state, "retriever", None)
+    if retriever is not None:
+        return retriever.dense.backend
+    return f"not loaded ({getattr(app.state, 'retriever_error', None) or 'startup warm-up not run'})"
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -54,7 +91,7 @@ def meta() -> MetaResponse:
         unique_dockets=323,
         as_of=resolve_as_of(),
         models=ModelIds(generation=cfg["generation"], query_parser=cfg["query_parser"], verifier=cfg["verifier"]),
-        embedding_backend="MOCK (not loaded)",
+        embedding_backend=embedding_backend(),
         coverage=mocks.MOCK_COVERAGE,
         mock=True,
     )

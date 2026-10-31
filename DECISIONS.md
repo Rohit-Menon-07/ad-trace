@@ -125,3 +125,22 @@ Deviations from docs/SPEC.md and choices made where it was ambiguous. One line e
 80. **REVIEW. New extraction rule `withdraw.subject` (HIGH, source=column): Subject Heading contains "Withdrawal"**, used only when the Summary shows no withdrawal. *Reason: R0294 (an empty Summary) is the withdrawal notice for docket 2000-NM-120-AD; without it, 4 records showed as not withdrawn.*
 81. **`is_latest_in_docket_group`:** the latest `citation_publish_date` among non-duplicates; ties mark all tied records as latest; duplicates are never latest.
 82. **`superseded_by_proposal` uses only the AD Number column.** In the real data it is empty for every record (no NPRM's final AD number is cited elsewhere), and a test asserts this so the claim stays honest.
+
+## Prompt 6: hybrid retrieval (items marked REVIEW need a human decision)
+
+83. **The CLI is `python -m backend.app.retrieval.search` (package `backend.app`).** `--bench N` prints p50/p95 per mode; `--compare` shows the three rankings side by side.
+84. **Embedding backend: BAAI/bge-small-en-v1.5 (384-d) loaded from the local Hugging Face cache.** It was installed with CPU-only torch 2.15 and sentence-transformers 6.2 on Python 3.14. The TF-IDF char 3–5-gram fallback is logged as a WARNING and named in `/api/meta` with the reason. `ADTRACE_EMBEDDINGS=tfidf` forces it (used by tests for speed).
+85. **The sanitiser keeps only `[A-Za-z0-9]` tokens (with internal - or /), double-quotes each, ORs them, and drops stopwords including AND/OR/NOT/NEAR.** Tokens with a digit also get a prefix match (`"a330"*`) and their norm_model() form. *Reason: with "-" as a token character, a bare "A330" would otherwise never match "A330-243"; OR (not AND) suits natural-language questions.*
+86. **REVIEW. Hard filters mirror the engine instead of plain equality:**
+    - the make filter removes only records the engine calls a "different" manufacturer, so make-family and related spellings stay, and records with no make stay;
+    - the model filter removes only HIGH/MEDIUM, complete lists that NO_MATCH, so series overlaps, spelling variants and unknown lists stay;
+    - the date filter keeps undated records.
+
+    *Reason: retrieval must never hide a record the engine would keep as UNDETERMINED. The cost is that a make filter for "Airbus SAS" keeps 85 Airbus-family records.*
+87. **REVIEW. `extra_sentence_bonus` is 0.02, not 0.1.** RRF steps are about 0.0003 per rank, so 0.1 let a record with three mediocre sentences (R0012, radio altimeter) outrank the record ranked #1 by both BM25 and dense (R0003, radio management panel). To be tuned on the dev split (Prompt 11).
+88. **Records with an empty Summary (R0294) have no sentences, so they are reachable only through `records_fts`, as a `<rid>#heading` unit (BM25 only).** The evidence is the Subject Heading with no span. *Reason: otherwise they could never be retrieved, and EMPTY_SOURCE_TEXT could never be raised.*
+89. **The single-ranker modes (`bm25`, `dense`) use the same 1/(k+rank) scoring and aggregation as hybrid**, so the three baselines differ only in which rankings are fused.
+90. **`top_bm25_norm` = s/(1+s), where s = −bm25()** (saturating 0..1). No thresholds are set here (Prompt 11).
+91. **The dense cache is `data/index/emb_sentences.npy`, `ids.json` and `emb_meta.json`.** The version hash covers the model name and every header-prefixed text. `make ingest` re-embeds only on a hash change (about 20 s on this laptop).
+92. **The app warms the Retriever in a FastAPI lifespan hook (about 5 s).** `ADTRACE_SKIP_WARM=1` skips it. Failures are reported in `/api/meta.embedding_backend`, never swallowed. Set `HF_HUB_OFFLINE=1` to avoid Hugging Face HEAD requests at startup once the model is cached.
+93. **The cross-encoder rerank is implemented behind `retrieval.rerank.enabled` (default false) and untested.** *Reason: the spec says optional and off by default; it adds a second model download.*

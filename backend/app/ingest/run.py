@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import logging
+import sqlite3
 from collections import Counter
 from dataclasses import dataclass
 from datetime import date
@@ -31,6 +32,8 @@ from backend.app.ingest.makes import (
 )
 from backend.app.ingest.makes import make_family as family_of
 from backend.app.ingest.sentences import sentence_id, split_sentences
+from backend.app.retrieval.dense import load_dense
+from backend.app.retrieval.fts import build_fts
 
 log = logging.getLogger("ingest")
 
@@ -142,6 +145,12 @@ def ingest(xlsx: Path, db_path: Path, write_docs: bool = True, extract: bool = T
     tmp = temp_path(db_path)
     write_database(tmp, db_records, sentences, record_makes, vocab, groups_rows, meta)
     extracted = extract_db(tmp, write_docs=write_docs) if extract else None
+    if extract:
+        conn = sqlite3.connect(tmp)
+        try:
+            build_fts(conn)  # FTS indexes read the extracted model lists
+        finally:
+            conn.close()
     swap_in(tmp, db_path)
 
     if write_docs:
@@ -197,6 +206,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--xlsx", type=Path, default=repo_path("raw_xlsx"))
     parser.add_argument("--db", type=Path, default=repo_path("sqlite_path"))
     parser.add_argument("--no-docs", action="store_true", help="skip regenerating alias yaml and audit docs")
+    parser.add_argument("--no-dense", action="store_true", help="skip building/refreshing the dense embeddings")
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     if not args.xlsx.exists():
@@ -205,7 +215,15 @@ def main(argv: list[str] | None = None) -> None:
     print(quality_summary(res))
     if res.extract:
         print(summary_text(res.extract))
-    print(f"\nwrote {args.db.relative_to(ROOT) if args.db.is_relative_to(ROOT) else args.db}")
+    print(f"\nwrote {args.db.relative_to(ROOT) if args.db.is_relative_to(ROOT) else args.db} (incl. FTS5 indexes)")
+    if not args.no_dense:
+        conn = sqlite3.connect(args.db)
+        try:
+            dense = load_dense(conn)  # cached by a version hash of the embedded texts; rebuilt only when it changes
+        finally:
+            conn.close()
+        state = "rebuilt" if dense.rebuilt else "up to date (hash match)"
+        print(f"dense index: {len(dense.ids)} sentences, backend {dense.backend}, {state}")
 
 
 if __name__ == "__main__":
