@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ExternalLink, X } from 'lucide-react';
-import { getRecord } from '../api/client';
+import { api } from '../api/client';
 import type { RecordDetail, Sentence } from '../types/api';
 import type { DrawerTarget } from './CitationChip';
 import { MockBadge } from './MockBadge';
@@ -16,7 +16,7 @@ export function SourceDrawer({ target, onClose }: Props) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const { data, isLoading, error } = useQuery({
     queryKey: ['record', recordId],
-    queryFn: () => getRecord(recordId as string),
+    queryFn: () => api.record(recordId as string),
     enabled: recordId !== null,
   });
 

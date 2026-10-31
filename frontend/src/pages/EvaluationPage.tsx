@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { getEval } from '../api/client';
+import { api } from '../api/client';
 import { MetricsTable } from '../components/MetricsTable';
 import { MockBadge } from '../components/MockBadge';
 
 export function EvaluationPage() {
-  const { data, isPending, error } = useQuery({ queryKey: ['eval'], queryFn: getEval });
+  const { data, isPending, error } = useQuery({ queryKey: ['eval'], queryFn: api.evalLatest });
   if (isPending) return <p className="text-sm">Loading evaluation…</p>;
   if (error) return <p className="text-sm">Could not load evaluation: {String(error)}</p>;
   return (

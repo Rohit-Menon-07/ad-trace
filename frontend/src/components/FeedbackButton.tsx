@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Flag } from 'lucide-react';
-import { sendFeedback } from '../api/client';
+import { api } from '../api/client';
 
 /** H13: the user can always flag an answer as wrong; it is logged with the request id. */
 export function FeedbackButton({ requestId }: { requestId: string }) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState('');
-  const m = useMutation({ mutationFn: () => sendFeedback(requestId, reason) });
+  const m = useMutation({ mutationFn: () => api.feedback({ request_id: requestId, reason }) });
 
   if (m.isSuccess) return <p className="text-sm" role="status">Thanks. Flag recorded for {requestId}.</p>;
   if (!open)

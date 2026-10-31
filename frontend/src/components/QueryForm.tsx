@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Search } from 'lucide-react';
-import { getMakes, getModels } from '../api/client';
+import { api } from '../api/client';
 import type { SearchRequest } from '../types/api';
 
 interface Props {
@@ -14,9 +14,9 @@ const input = 'w-full rounded border border-slate-400 bg-white px-2 py-1.5 text-
 const labelCls = 'mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-300';
 
 export function QueryForm({ value, onChange, onSubmit, busy }: Props) {
-  const makes = useQuery({ queryKey: ['makes'], queryFn: getMakes });
+  const makes = useQuery({ queryKey: ['makes'], queryFn: api.makes });
   const make = value.make ?? '';
-  const models = useQuery({ queryKey: ['models', make], queryFn: () => getModels(make), enabled: make !== '' });
+  const models = useQuery({ queryKey: ['models', make], queryFn: () => api.models(make), enabled: make !== '' });
   const set = (patch: Partial<SearchRequest>) => onChange({ ...value, ...patch });
 
   return (

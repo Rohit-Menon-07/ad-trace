@@ -1,31 +1,26 @@
-# AD Trace. Requires GNU make (on Windows: Git Bash + `choco install make`, or run the commands directly).
+# AD Trace. Every target delegates to scripts/tasks.py so `make X` == `python scripts/tasks.py X`
+# (useful on Windows, where GNU make is often missing). Activate .venv first, or pass PY=...
 PY ?= python
-FRONTEND := frontend
 
-.PHONY: setup dev dev-frontend dev-backend test ingest eval lint
+.PHONY: setup dev test lint types ingest eval
 
 setup:
-	$(PY) -m pip install -r backend/requirements.txt || echo "backend/requirements.txt not created yet (backend not built)"
-	cd $(FRONTEND) && npm install
+	$(PY) scripts/tasks.py setup
 
-dev: dev-frontend
-
-dev-frontend:
-	cd $(FRONTEND) && npm run dev
-
-dev-backend:
-	$(PY) -m uvicorn backend.app.main:app --reload --port 8000
+dev:
+	$(PY) scripts/tasks.py dev
 
 test:
-	$(PY) -m pytest backend/tests -q || echo "no backend tests yet"
-	cd $(FRONTEND) && npm run typecheck
-
-ingest:
-	$(PY) -m backend.app.ingest
-
-eval:
-	$(PY) -m backend.app.eval
+	$(PY) scripts/tasks.py test
 
 lint:
-	$(PY) -m ruff check backend || echo "ruff: backend not built yet"
-	cd $(FRONTEND) && npm run lint && npm run typecheck
+	$(PY) scripts/tasks.py lint
+
+types:
+	$(PY) scripts/tasks.py types
+
+ingest:
+	$(PY) scripts/tasks.py ingest
+
+eval:
+	$(PY) scripts/tasks.py eval

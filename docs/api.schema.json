@@ -1,0 +1,1434 @@
+{
+  "$defs": {
+    "ApplicabilityResult": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "reasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reasons",
+          "type": "array"
+        },
+        "record_id": {
+          "title": "Record Id",
+          "type": "string"
+        },
+        "verdict": {
+          "enum": [
+            "APPLICABLE",
+            "NOT_APPLICABLE",
+            "UNDETERMINED",
+            "NOT_CHECKED"
+          ],
+          "title": "Verdict",
+          "type": "string"
+        }
+      },
+      "required": [
+        "record_id",
+        "verdict",
+        "reasons",
+        "evidence_ids"
+      ],
+      "title": "ApplicabilityResult",
+      "type": "object"
+    },
+    "Citation": {
+      "additionalProperties": false,
+      "properties": {
+        "docket": {
+          "title": "Docket",
+          "type": "string"
+        },
+        "evidence_id": {
+          "description": "Sentence id, e.g. R0001#s2.",
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "fr_citation": {
+          "title": "Fr Citation",
+          "type": "string"
+        },
+        "pages": {
+          "title": "Pages",
+          "type": "string"
+        },
+        "quote": {
+          "title": "Quote",
+          "type": "string"
+        },
+        "span_end": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Span End"
+        },
+        "span_start": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Offset into the record Summary, for highlighting.",
+          "title": "Span Start"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Url"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "docket",
+        "quote",
+        "span_start",
+        "span_end",
+        "fr_citation",
+        "pages",
+        "url"
+      ],
+      "title": "Citation",
+      "type": "object"
+    },
+    "Claim": {
+      "additionalProperties": false,
+      "properties": {
+        "citations": {
+          "items": {
+            "$ref": "#/$defs/Citation"
+          },
+          "title": "Citations",
+          "type": "array"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "verification": {
+          "enum": [
+            "verified",
+            "partial"
+          ],
+          "title": "Verification",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text",
+        "citations",
+        "verification"
+      ],
+      "title": "Claim",
+      "type": "object"
+    },
+    "CoverageMetric": {
+      "additionalProperties": false,
+      "properties": {
+        "denominator": {
+          "title": "Denominator",
+          "type": "integer"
+        },
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "note": {
+          "title": "Note",
+          "type": "string"
+        },
+        "numerator": {
+          "title": "Numerator",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "key",
+        "label",
+        "numerator",
+        "denominator",
+        "note"
+      ],
+      "title": "CoverageMetric",
+      "type": "object"
+    },
+    "CoverageReport": {
+      "additionalProperties": false,
+      "properties": {
+        "generated_at": {
+          "title": "Generated At",
+          "type": "string"
+        },
+        "limits": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Limits",
+          "type": "array"
+        },
+        "metrics": {
+          "items": {
+            "$ref": "#/$defs/CoverageMetric"
+          },
+          "title": "Metrics",
+          "type": "array"
+        },
+        "total_records": {
+          "title": "Total Records",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "generated_at",
+        "total_records",
+        "metrics",
+        "limits"
+      ],
+      "title": "CoverageReport",
+      "type": "object"
+    },
+    "EvalResults": {
+      "additionalProperties": false,
+      "properties": {
+        "ablation": {
+          "items": {
+            "$ref": "#/$defs/MetricRow"
+          },
+          "title": "Ablation",
+          "type": "array"
+        },
+        "eval_set": {
+          "$ref": "#/$defs/EvalSet"
+        },
+        "failures": {
+          "items": {
+            "$ref": "#/$defs/FailureCase"
+          },
+          "title": "Failures",
+          "type": "array"
+        },
+        "generated_at": {
+          "title": "Generated At",
+          "type": "string"
+        },
+        "metric_defs": {
+          "items": {
+            "$ref": "#/$defs/MetricDef"
+          },
+          "title": "Metric Defs",
+          "type": "array"
+        },
+        "mock": {
+          "default": false,
+          "title": "Mock",
+          "type": "boolean"
+        },
+        "systems": {
+          "items": {
+            "$ref": "#/$defs/MetricRow"
+          },
+          "title": "Systems",
+          "type": "array"
+        }
+      },
+      "required": [
+        "generated_at",
+        "eval_set",
+        "metric_defs",
+        "systems",
+        "ablation",
+        "failures",
+        "mock"
+      ],
+      "title": "EvalResults",
+      "type": "object"
+    },
+    "EvalSet": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "size": {
+          "title": "Size",
+          "type": "integer"
+        },
+        "synthetic": {
+          "title": "Synthetic",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "size",
+        "synthetic",
+        "description"
+      ],
+      "title": "EvalSet",
+      "type": "object"
+    },
+    "ExcludedRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "docket": {
+          "title": "Docket",
+          "type": "string"
+        },
+        "reason": {
+          "description": "Plain-language explanation.",
+          "title": "Reason",
+          "type": "string"
+        },
+        "record_id": {
+          "title": "Record Id",
+          "type": "string"
+        },
+        "rule": {
+          "description": "Machine rule id, e.g. \"S3.hard_filter.model\".",
+          "title": "Rule",
+          "type": "string"
+        },
+        "subject_heading": {
+          "title": "Subject Heading",
+          "type": "string"
+        }
+      },
+      "required": [
+        "record_id",
+        "docket",
+        "subject_heading",
+        "rule",
+        "reason"
+      ],
+      "title": "ExcludedRecord",
+      "type": "object"
+    },
+    "Extraction": {
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "enum": [
+            "HIGH",
+            "MEDIUM",
+            "LOW"
+          ],
+          "title": "Confidence",
+          "type": "string"
+        },
+        "field": {
+          "title": "Field",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "record_id": {
+          "title": "Record Id",
+          "type": "string"
+        },
+        "rule_id": {
+          "title": "Rule Id",
+          "type": "string"
+        },
+        "sentence_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Sentence Id"
+        },
+        "source": {
+          "enum": [
+            "column",
+            "summary",
+            "comments"
+          ],
+          "title": "Source",
+          "type": "string"
+        },
+        "span_end": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Span End"
+        },
+        "span_start": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Span Start"
+        },
+        "value_json": {
+          "title": "Value Json"
+        }
+      },
+      "required": [
+        "id",
+        "record_id",
+        "field",
+        "value_json",
+        "source",
+        "sentence_id",
+        "span_start",
+        "span_end",
+        "rule_id",
+        "confidence"
+      ],
+      "title": "Extraction",
+      "type": "object"
+    },
+    "FailureCase": {
+      "additionalProperties": false,
+      "properties": {
+        "cause": {
+          "title": "Cause",
+          "type": "string"
+        },
+        "expected": {
+          "title": "Expected",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "observed": {
+          "title": "Observed",
+          "type": "string"
+        },
+        "query": {
+          "title": "Query",
+          "type": "string"
+        },
+        "user_signal": {
+          "description": "How the user would know something is wrong.",
+          "title": "User Signal",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "query",
+        "expected",
+        "observed",
+        "cause",
+        "user_signal"
+      ],
+      "title": "FailureCase",
+      "type": "object"
+    },
+    "FeedbackRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "reason": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "request_id": {
+          "title": "Request Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "request_id",
+        "reason"
+      ],
+      "title": "FeedbackRequest",
+      "type": "object"
+    },
+    "FeedbackResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "mock": {
+          "title": "Mock",
+          "type": "boolean"
+        },
+        "ok": {
+          "title": "Ok",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "ok",
+        "mock"
+      ],
+      "title": "FeedbackResponse",
+      "type": "object"
+    },
+    "HealthResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "mock": {
+          "title": "Mock",
+          "type": "boolean"
+        },
+        "status": {
+          "const": "ok",
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "status",
+        "mock"
+      ],
+      "title": "HealthResponse",
+      "type": "object"
+    },
+    "LineageEdge": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Sentence the edge was extracted from.",
+          "title": "Evidence Id"
+        },
+        "relation": {
+          "enum": [
+            "supersedes",
+            "continues",
+            "shares_docket",
+            "withdraws",
+            "comment_extension",
+            "correction_of",
+            "applicability_change"
+          ],
+          "title": "Relation",
+          "type": "string"
+        },
+        "target_in_dataset": {
+          "title": "Target In Dataset",
+          "type": "boolean"
+        },
+        "target_record_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Target Record Id"
+        },
+        "target_ref": {
+          "description": "e.g. \"AD 2023-14-05\" or a docket number.",
+          "title": "Target Ref",
+          "type": "string"
+        }
+      },
+      "required": [
+        "relation",
+        "target_ref",
+        "target_in_dataset",
+        "target_record_id",
+        "evidence_id"
+      ],
+      "title": "LineageEdge",
+      "type": "object"
+    },
+    "MetaResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "as_of": {
+          "format": "date",
+          "title": "As Of",
+          "type": "string"
+        },
+        "coverage": {
+          "$ref": "#/$defs/CoverageReport"
+        },
+        "dataset": {
+          "title": "Dataset",
+          "type": "string"
+        },
+        "embedding_backend": {
+          "title": "Embedding Backend",
+          "type": "string"
+        },
+        "mock": {
+          "default": false,
+          "title": "Mock",
+          "type": "boolean"
+        },
+        "models": {
+          "$ref": "#/$defs/ModelIds"
+        },
+        "total_records": {
+          "title": "Total Records",
+          "type": "integer"
+        },
+        "unique_dockets": {
+          "title": "Unique Dockets",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "dataset",
+        "total_records",
+        "unique_dockets",
+        "as_of",
+        "models",
+        "embedding_backend",
+        "coverage",
+        "mock"
+      ],
+      "title": "MetaResponse",
+      "type": "object"
+    },
+    "MetricDef": {
+      "additionalProperties": false,
+      "properties": {
+        "higher_is_better": {
+          "title": "Higher Is Better",
+          "type": "boolean"
+        },
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "unit": {
+          "enum": [
+            "ratio",
+            "ms",
+            "count"
+          ],
+          "title": "Unit",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key",
+        "label",
+        "unit",
+        "higher_is_better"
+      ],
+      "title": "MetricDef",
+      "type": "object"
+    },
+    "MetricRow": {
+      "additionalProperties": false,
+      "properties": {
+        "is_baseline": {
+          "title": "Is Baseline",
+          "type": "boolean"
+        },
+        "system": {
+          "title": "System",
+          "type": "string"
+        },
+        "values": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Values",
+          "type": "object"
+        }
+      },
+      "required": [
+        "system",
+        "is_baseline",
+        "values"
+      ],
+      "title": "MetricRow",
+      "type": "object"
+    },
+    "ModelIds": {
+      "additionalProperties": false,
+      "properties": {
+        "generation": {
+          "title": "Generation",
+          "type": "string"
+        },
+        "query_parser": {
+          "title": "Query Parser",
+          "type": "string"
+        },
+        "verifier": {
+          "title": "Verifier",
+          "type": "string"
+        }
+      },
+      "required": [
+        "generation",
+        "query_parser",
+        "verifier"
+      ],
+      "title": "ModelIds",
+      "type": "object"
+    },
+    "RecordCard": {
+      "additionalProperties": false,
+      "properties": {
+        "ad_number": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Ad Number"
+        },
+        "comment_period": {
+          "description": "Computed against as_of.",
+          "enum": [
+            "OPEN",
+            "CLOSED",
+            "UNKNOWN"
+          ],
+          "title": "Comment Period",
+          "type": "string"
+        },
+        "comments_due": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Effective due date after any extension.",
+          "title": "Comments Due"
+        },
+        "docket": {
+          "title": "Docket",
+          "type": "string"
+        },
+        "fr_citation": {
+          "title": "Fr Citation",
+          "type": "string"
+        },
+        "issue_date": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Issue Date"
+        },
+        "lineage": {
+          "items": {
+            "$ref": "#/$defs/LineageEdge"
+          },
+          "title": "Lineage",
+          "type": "array"
+        },
+        "make": {
+          "description": "Canonical make.",
+          "title": "Make",
+          "type": "string"
+        },
+        "models": {
+          "description": "Extracted and suffix-expanded model designators.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Models",
+          "type": "array"
+        },
+        "models_confidence": {
+          "anyOf": [
+            {
+              "enum": [
+                "HIGH",
+                "MEDIUM",
+                "LOW"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "null = no model list found.",
+          "title": "Models Confidence"
+        },
+        "pages": {
+          "title": "Pages",
+          "type": "string"
+        },
+        "record_id": {
+          "title": "Record Id",
+          "type": "string"
+        },
+        "retrieval_score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Fused RRF score. Computed, never LLM-reported (H12).",
+          "title": "Retrieval Score"
+        },
+        "status_label": {
+          "const": "PROPOSED",
+          "title": "Status Label",
+          "type": "string"
+        },
+        "subject_heading": {
+          "title": "Subject Heading",
+          "type": "string"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Url"
+        },
+        "withdrawn": {
+          "title": "Withdrawn",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "record_id",
+        "docket",
+        "subject_heading",
+        "make",
+        "models",
+        "models_confidence",
+        "status_label",
+        "withdrawn",
+        "comment_period",
+        "comments_due",
+        "issue_date",
+        "fr_citation",
+        "pages",
+        "url",
+        "ad_number",
+        "retrieval_score",
+        "lineage"
+      ],
+      "title": "RecordCard",
+      "type": "object"
+    },
+    "RecordDetail": {
+      "additionalProperties": false,
+      "properties": {
+        "extractions": {
+          "items": {
+            "$ref": "#/$defs/Extraction"
+          },
+          "title": "Extractions",
+          "type": "array"
+        },
+        "lineage": {
+          "items": {
+            "$ref": "#/$defs/LineageEdge"
+          },
+          "title": "Lineage",
+          "type": "array"
+        },
+        "mock": {
+          "default": false,
+          "title": "Mock",
+          "type": "boolean"
+        },
+        "record": {
+          "$ref": "#/$defs/RecordFull"
+        },
+        "sentences": {
+          "items": {
+            "$ref": "#/$defs/Sentence"
+          },
+          "title": "Sentences",
+          "type": "array"
+        }
+      },
+      "required": [
+        "record",
+        "sentences",
+        "extractions",
+        "lineage",
+        "mock"
+      ],
+      "title": "RecordDetail",
+      "type": "object"
+    },
+    "RecordFull": {
+      "additionalProperties": false,
+      "properties": {
+        "ad_number": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Ad Number"
+        },
+        "citation_publish_date": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Citation Publish Date"
+        },
+        "comment_period": {
+          "description": "Computed against as_of.",
+          "enum": [
+            "OPEN",
+            "CLOSED",
+            "UNKNOWN"
+          ],
+          "title": "Comment Period",
+          "type": "string"
+        },
+        "comments_due": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Effective due date after any extension.",
+          "title": "Comments Due"
+        },
+        "docket": {
+          "title": "Docket",
+          "type": "string"
+        },
+        "fr_citation": {
+          "title": "Fr Citation",
+          "type": "string"
+        },
+        "issue_date": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Issue Date"
+        },
+        "lineage": {
+          "items": {
+            "$ref": "#/$defs/LineageEdge"
+          },
+          "title": "Lineage",
+          "type": "array"
+        },
+        "make": {
+          "description": "Canonical make.",
+          "title": "Make",
+          "type": "string"
+        },
+        "make_raw": {
+          "title": "Make Raw",
+          "type": "string"
+        },
+        "model_raw": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Model Raw"
+        },
+        "models": {
+          "description": "Extracted and suffix-expanded model designators.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Models",
+          "type": "array"
+        },
+        "models_confidence": {
+          "anyOf": [
+            {
+              "enum": [
+                "HIGH",
+                "MEDIUM",
+                "LOW"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "null = no model list found.",
+          "title": "Models Confidence"
+        },
+        "pages": {
+          "title": "Pages",
+          "type": "string"
+        },
+        "product_type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Product Type"
+        },
+        "record_id": {
+          "title": "Record Id",
+          "type": "string"
+        },
+        "retrieval_score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Fused RRF score. Computed, never LLM-reported (H12).",
+          "title": "Retrieval Score"
+        },
+        "status_label": {
+          "const": "PROPOSED",
+          "title": "Status Label",
+          "type": "string"
+        },
+        "subject_heading": {
+          "title": "Subject Heading",
+          "type": "string"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        },
+        "summary_missing": {
+          "title": "Summary Missing",
+          "type": "boolean"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Url"
+        },
+        "withdrawn": {
+          "title": "Withdrawn",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "record_id",
+        "docket",
+        "subject_heading",
+        "make",
+        "models",
+        "models_confidence",
+        "status_label",
+        "withdrawn",
+        "comment_period",
+        "comments_due",
+        "issue_date",
+        "fr_citation",
+        "pages",
+        "url",
+        "ad_number",
+        "retrieval_score",
+        "lineage",
+        "summary",
+        "summary_missing",
+        "make_raw",
+        "model_raw",
+        "product_type",
+        "citation_publish_date"
+      ],
+      "title": "RecordFull",
+      "type": "object"
+    },
+    "SearchRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "as_of": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "As Of"
+        },
+        "make": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Make"
+        },
+        "mode": {
+          "default": "answer",
+          "enum": [
+            "answer",
+            "search_only"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model"
+        },
+        "query": {
+          "title": "Query",
+          "type": "string"
+        },
+        "serial": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Serial"
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "title": "SearchRequest",
+      "type": "object"
+    },
+    "SearchResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "applicability": {
+          "items": {
+            "$ref": "#/$defs/ApplicabilityResult"
+          },
+          "title": "Applicability",
+          "type": "array"
+        },
+        "as_of": {
+          "format": "date",
+          "title": "As Of",
+          "type": "string"
+        },
+        "claims": {
+          "items": {
+            "$ref": "#/$defs/Claim"
+          },
+          "title": "Claims",
+          "type": "array"
+        },
+        "clarification_options": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Clarification Options",
+          "type": "array"
+        },
+        "disclaimer": {
+          "title": "Disclaimer",
+          "type": "string"
+        },
+        "excluded": {
+          "items": {
+            "$ref": "#/$defs/ExcludedRecord"
+          },
+          "title": "Excluded",
+          "type": "array"
+        },
+        "latency_ms": {
+          "title": "Latency Ms",
+          "type": "integer"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "mock": {
+          "default": false,
+          "title": "Mock",
+          "type": "boolean"
+        },
+        "rationale_steps": {
+          "description": "Model-written, max 5, each cites evidence ids like [R0001#s2].",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 5,
+          "title": "Rationale Steps",
+          "type": "array"
+        },
+        "reason_code": {
+          "anyOf": [
+            {
+              "enum": [
+                "UNKNOWN_ENTITY",
+                "AMBIGUOUS_MODEL",
+                "AMBIGUOUS_MAKE",
+                "NO_RETRIEVAL_HIT",
+                "LOW_RETRIEVAL_SCORE",
+                "EMPTY_SOURCE_TEXT",
+                "APPLICABILITY_UNDETERMINED",
+                "OUT_OF_SCOPE",
+                "CONTRADICTS_RECORD",
+                "CONFLICTING_EVIDENCE",
+                "INJECTION_SUSPECTED",
+                "VERIFICATION_FAILED",
+                "LLM_ERROR"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reason Code"
+        },
+        "records": {
+          "items": {
+            "$ref": "#/$defs/RecordCard"
+          },
+          "title": "Records",
+          "type": "array"
+        },
+        "request_id": {
+          "title": "Request Id",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "answered",
+            "partial",
+            "refused",
+            "needs_clarification"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "trace": {
+          "description": "Code-generated, authoritative.",
+          "items": {
+            "$ref": "#/$defs/TraceStep"
+          },
+          "title": "Trace",
+          "type": "array"
+        }
+      },
+      "required": [
+        "request_id",
+        "status",
+        "reason_code",
+        "message",
+        "claims",
+        "rationale_steps",
+        "records",
+        "applicability",
+        "excluded",
+        "clarification_options",
+        "trace",
+        "disclaimer",
+        "as_of",
+        "latency_ms",
+        "mock"
+      ],
+      "title": "SearchResponse",
+      "type": "object"
+    },
+    "Sentence": {
+      "additionalProperties": false,
+      "properties": {
+        "end": {
+          "title": "End",
+          "type": "integer"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "idx": {
+          "title": "Idx",
+          "type": "integer"
+        },
+        "record_id": {
+          "title": "Record Id",
+          "type": "string"
+        },
+        "start": {
+          "title": "Start",
+          "type": "integer"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "record_id",
+        "idx",
+        "text",
+        "start",
+        "end"
+      ],
+      "title": "Sentence",
+      "type": "object"
+    },
+    "TraceStep": {
+      "additionalProperties": false,
+      "properties": {
+        "details": {
+          "additionalProperties": true,
+          "title": "Details",
+          "type": "object"
+        },
+        "ms": {
+          "title": "Ms",
+          "type": "integer"
+        },
+        "stage": {
+          "title": "Stage",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "ok",
+            "warn",
+            "stop"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        }
+      },
+      "required": [
+        "stage",
+        "status",
+        "summary",
+        "details",
+        "ms"
+      ],
+      "title": "TraceStep",
+      "type": "object"
+    }
+  },
+  "title": "AD Trace API"
+}

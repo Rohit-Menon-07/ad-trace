@@ -1,0 +1,16 @@
+[project]
+name = "ad-trace"
+version = "0.2.0"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = ["frontend", ".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

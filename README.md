@@ -5,14 +5,15 @@ Traceable search over FAA airworthiness directive **proposals** (NPRMs). Given a
 Design: [docs/SPEC.md](docs/SPEC.md). Decisions and deviations: [DECISIONS.md](DECISIONS.md).
 
 ## Status
-- **Frontend shell on MOCK data only.** There is no backend yet. Everything the UI shows is labelled MOCK.
+- **MOCK backend.** FastAPI serves all SPEC §7 endpoints, but search, records, vocab, meta and eval return canned MOCK data (`mock: true`, shown as a MOCK tag in the UI). There is no ingestion or pipeline yet.
 
-## Run (frontend)
+## Run
 ```bash
-cd frontend
-npm install
-npm run dev        # http://localhost:5173 ; use the dev scenario switcher (bottom left)
-npm run lint       # eslint
-npm run typecheck  # tsc
+python -m venv .venv && . .venv/Scripts/activate   # macOS/Linux: . .venv/bin/activate
+make setup     # pip + npm install
+make dev       # backend http://localhost:8000 (OpenAPI at /docs) + frontend http://localhost:5173
+make test      # pytest (incl. TS-type drift check) + tsc
+make lint      # ruff check/format + eslint + tsc
+make types     # regenerate frontend/src/types/api.ts from backend/app/schemas.py
 ```
-The Makefile wraps these (`make setup`, `make dev`, `make lint`) if GNU make is available.
+No `make`? Run `python scripts/tasks.py <target>`; it is the same thing.

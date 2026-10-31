@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Moon, Sun } from 'lucide-react';
-import { USE_MOCK } from './api/client';
+import { useQuery } from '@tanstack/react-query';
+import { api } from './api/client';
 import { MockBadge } from './components/MockBadge';
 import { CoveragePage } from './pages/CoveragePage';
 import { EvaluationPage } from './pages/EvaluationPage';
@@ -27,7 +28,7 @@ export default function App() {
         <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-4 px-4 py-3">
           <h1 className="text-lg font-bold tracking-tight">AD Trace</h1>
           <span className="text-xs text-slate-600 dark:text-slate-400">FAA AD proposals: find, check applicability, cite</span>
-          {USE_MOCK && <MockBadge label="MOCK MODE: no backend" />}
+          <BackendStatus />
           <nav aria-label="Pages" className="ml-auto flex gap-1">
             {PAGES.map((p) => (
               <button
@@ -58,4 +59,13 @@ export default function App() {
       </main>
     </div>
   );
+}
+
+/** Header tag driven by the backend's own `mock` flag on /api/meta. */
+function BackendStatus() {
+  const meta = useQuery({ queryKey: ['meta'], queryFn: api.meta });
+  if (meta.isError)
+    return <span className="rounded border-2 border-amber-500 px-1.5 py-0.5 text-xs font-bold">BACKEND UNREACHABLE</span>;
+  if (meta.data?.mock) return <MockBadge label="MOCK BACKEND" />;
+  return null;
 }

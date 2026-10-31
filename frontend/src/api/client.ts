@@ -1,66 +1,51 @@
-// Single data-access layer. In this build every call is served from src/mocks (MOCK).
-// When the FastAPI backend exists, set USE_MOCK = false and the same functions hit /api/*.
+// Single data-access layer: typed fetch wrappers for the FastAPI backend (SPEC §7).
+// Requests go to /api/*, which Vite proxies to http://localhost:8000 in dev.
+// Whether data is MOCK is decided by the backend and signalled by `mock: true` in payloads.
 
-import type { EvalResults, MetaResponse, RecordDetail, SearchRequest, SearchResponse } from '../types/api';
-import { MOCK_EVAL, MOCK_MAKES, MOCK_META, MOCK_MODELS } from '../mocks/meta';
-import { MOCK_RECORDS } from '../mocks/records';
-import { MOCK_SCENARIOS, type ScenarioKey } from '../mocks/scenarios';
+import type {
+  EvalResults,
+  FeedbackRequest,
+  FeedbackResponse,
+  HealthResponse,
+  MetaResponse,
+  RecordDetail,
+  SearchRequest,
+  SearchResponse,
+} from '../types/api';
 
-export const USE_MOCK = true;
-
-const MOCK_DELAY_MS = 250;
-
-function delay<T>(value: T): Promise<T> {
-  return new Promise((resolve) => setTimeout(() => resolve(structuredClone(value)), MOCK_DELAY_MS));
+export class ApiError extends Error {
+  readonly status: number;
+  constructor(path: string, status: number, detail: string) {
+    super(`${path} failed: HTTP ${status}${detail ? ` (${detail})` : ''}`);
+    this.status = status;
+  }
 }
 
-async function getJson<T>(path: string): Promise<T> {
-  const res = await fetch(path);
-  if (!res.ok) throw new Error(`${path} failed: HTTP ${res.status}`);
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(path, init);
+  } catch {
+    throw new ApiError(path, 0, 'backend unreachable; is `make dev` running?');
+  }
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new ApiError(path, res.status, body.slice(0, 200));
+  }
   return (await res.json()) as T;
 }
 
-async function postJson<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-  if (!res.ok) throw new Error(`${path} failed: HTTP ${res.status}`);
-  return (await res.json()) as T;
+function post<T>(path: string, body: unknown): Promise<T> {
+  return request<T>(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
 }
 
-/** `scenario` is only used in MOCK mode, where it picks the canned response. */
-export function search(req: SearchRequest, scenario: ScenarioKey): Promise<SearchResponse> {
-  if (USE_MOCK) return delay(MOCK_SCENARIOS[scenario].response);
-  return postJson<SearchResponse>('/api/search', req);
-}
-
-export function getRecord(recordId: string): Promise<RecordDetail> {
-  if (USE_MOCK) {
-    const rec = MOCK_RECORDS[recordId];
-    return rec ? delay(rec) : Promise.reject(new Error(`MOCK record ${recordId} not found`));
-  }
-  return getJson<RecordDetail>(`/api/records/${encodeURIComponent(recordId)}`);
-}
-
-export function getMeta(): Promise<MetaResponse> {
-  return USE_MOCK ? delay(MOCK_META) : getJson<MetaResponse>('/api/meta');
-}
-
-export function getMakes(): Promise<string[]> {
-  return USE_MOCK ? delay(MOCK_MAKES) : getJson<string[]>('/api/vocab/makes');
-}
-
-export function getModels(make: string): Promise<string[]> {
-  if (USE_MOCK) return delay(MOCK_MODELS[make] ?? []);
-  return getJson<string[]>(`/api/vocab/models?make=${encodeURIComponent(make)}`);
-}
-
-export function getEval(): Promise<EvalResults> {
-  return USE_MOCK ? delay(MOCK_EVAL) : getJson<EvalResults>('/api/eval/latest');
-}
-
-export function sendFeedback(requestId: string, reason: string): Promise<{ ok: boolean }> {
-  if (USE_MOCK) {
-    console.info('MOCK feedback (not persisted)', { requestId, reason });
-    return delay({ ok: true });
-  }
-  return postJson<{ ok: boolean }>('/api/feedback', { request_id: requestId, reason });
-}
+export const api = {
+  health: () => request<HealthResponse>('/api/health'),
+  meta: () => request<MetaResponse>('/api/meta'),
+  makes: () => request<string[]>('/api/vocab/makes'),
+  models: (make: string) => request<string[]>(`/api/vocab/models?make=${encodeURIComponent(make)}`),
+  search: (req: SearchRequest) => post<SearchResponse>('/api/search', req),
+  record: (recordId: string) => request<RecordDetail>(`/api/records/${encodeURIComponent(recordId)}`),
+  evalLatest: () => request<EvalResults>('/api/eval/latest'),
+  feedback: (body: FeedbackRequest) => post<FeedbackResponse>('/api/feedback', body),
+};

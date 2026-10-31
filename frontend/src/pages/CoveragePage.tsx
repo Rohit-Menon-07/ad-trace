@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { getMeta } from '../api/client';
+import { api } from '../api/client';
 import { CoverageBars } from '../components/CoverageBars';
 import { MockBadge } from '../components/MockBadge';
 
 export function CoveragePage() {
-  const { data, isPending, error } = useQuery({ queryKey: ['meta'], queryFn: getMeta });
+  const { data, isPending, error } = useQuery({ queryKey: ['meta'], queryFn: api.meta });
   if (isPending) return <p className="text-sm">Loading coverage…</p>;
   if (error) return <p className="text-sm">Could not load coverage: {String(error)}</p>;
   return (

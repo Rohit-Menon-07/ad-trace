@@ -47,10 +47,13 @@ One sheet, 431 rows, 22 columns: Docket Number, Subject Heading, Status, CFR Par
 - Ambiguity: don't ask; choose the most conservative option and log it in DECISIONS.md with a one-line reason.
 
 ## Repo map
-- `config.yaml`: pinned model IDs, thresholds, `as_of` (null = today).
-- `frontend/`: Vite app. `src/types/api.ts` mirrors SPEC §7 Pydantic models; `src/mocks/` holds MOCK scenarios; `src/api/client.ts` is the only data-access layer (currently mock-backed).
-- `backend/`: not built yet (Prompt 1 = frontend shell only).
-- Windows dev box: `make` is not installed; run the Makefile commands directly (e.g. `cd frontend && npm run dev`).
+- `config.yaml`: pinned model IDs, thresholds, `as_of` (null = today). Loaded by `backend/app/config.py`.
+- `backend/app/schemas.py`: **single source of truth for the API contract** (SPEC §7 + extras). After changing it run `python scripts/tasks.py types` (regenerates `frontend/src/types/api.ts` + `docs/api.schema.json`); a pytest fails on drift. Never hand-edit `api.ts`.
+- `backend/app/main.py`: FastAPI endpoints. `backend/app/mocks.py`: MOCK data + keyword routing (delete once S1–S8 exist).
+- `frontend/src/api/client.ts`: the only data layer (`api.*` fetch wrappers; Vite proxies /api → :8000). `frontend/src/mocks/scenarioPresets.ts`: dev-only request presets.
+- `scripts/tasks.py`: task runner behind the Makefile. Windows dev box has no `make`: use `.venv/Scripts/python scripts/tasks.py {setup,dev,test,lint,types}`.
+- Python venv: `.venv/` (Python 3.14 locally; code targets 3.11+).
 
 ## Progress log
 - Prompt 1: repo scaffold, CLAUDE.md, DECISIONS.md, frontend shell on MOCK data with dev scenario switcher.
+- Prompt 2: Pydantic schemas + generated TS types, FastAPI mock backend (all 8 endpoints, mock=true), UI wired to the API, pytest suite, `make dev` runs both servers.
