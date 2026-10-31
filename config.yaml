@@ -33,6 +33,12 @@ generation:
 # Dev-only endpoints.
 dev:
   audit_endpoint: true               # GET /api/audit/{request_id}; switch off outside development
+  # Pinned "Try an example" inputs shown before the eval-case examples. Inputs only: answers come from the live
+  # pipeline. Not part of the evaluation set.
+  demo_examples:
+    - query: "Which proposed ADs concern the radio management panels on our A330-243?"
+      make: "Airbus SAS"
+      model: "A330-243"
 
 # Verification layers (S7). Each can be switched off for the ablation study.
 verify:

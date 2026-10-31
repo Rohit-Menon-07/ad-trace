@@ -245,3 +245,14 @@ def test_fake_generation_is_labelled_mock_and_drop_reasons_are_traced(pipe: Pipe
 def test_extractive_answer_is_not_mock(pipe: Pipeline) -> None:
     r = pipe.run(SearchRequest(**A330, mode="search_only"))
     assert r.mock is False
+
+
+def test_demo_question_is_answered_without_llm(pipe: Pipeline) -> None:
+    """REAL regression for the pinned demo question (config dev.demo_examples): with no model available it must
+    still answer, rank the RMP proposal (R0003) first and cite a sentence about radio management panels."""
+    r = pipe.run(SearchRequest(**A330))
+    assert r.status == "answered" and r.mock is False
+    assert r.records[0].record_id == "R0003"
+    assert any(a.record_id == "R0003" and a.verdict == "APPLICABLE" for a in r.applicability)
+    cited = [c for c in r.claims for x in c.citations if x.evidence_id.startswith("R0003#s")]
+    assert any("radio management panel" in c.text.lower() for c in cited)

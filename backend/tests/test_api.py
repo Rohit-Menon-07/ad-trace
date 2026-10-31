@@ -131,6 +131,9 @@ def test_examples_come_from_dev_eval_cases(client) -> None:
         pytest.skip("eval cases not built")
     rows = {json.loads(x)["id"]: json.loads(x) for x in CASES_PATH.read_text(encoding="utf-8").splitlines()}
     ex = client.get("/api/examples").json()
+    demo = [e for e in ex if e["category"] == "demo"]
+    assert demo and demo[0]["query"].startswith("Which proposed ADs concern the radio management panels")
+    ex = [e for e in ex if e["category"] != "demo"]
     assert len(ex) >= 8 and len({e["category"] for e in ex}) == len(ex)
     for e in ex:
         c = rows[e["case_id"]]

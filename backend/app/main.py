@@ -129,12 +129,24 @@ def eval_latest() -> EvalResults:
 
 @app.get("/api/examples", response_model=list[ExampleQuery])
 def examples() -> list[ExampleQuery]:
-    """'Try an example' inputs: one dev-split evaluation case per category (first by id), auto cases only.
-    Only the inputs are sent; answers always come from the live pipeline."""
+    """'Try an example' inputs: pinned demo inputs from config.yaml (dev.demo_examples), then one dev-split
+    evaluation case per category (first by id), auto cases only. Only inputs are sent; answers always come from
+    the live pipeline."""
     from backend.app.eval.cases import CASES_PATH
 
+    pinned = [
+        ExampleQuery(
+            case_id=f"DEMO-{i:02d}",
+            category="demo",
+            query=d["query"],
+            make=d.get("make"),
+            model=d.get("model"),
+            serial=d.get("serial"),
+        )  # fmt: skip
+        for i, d in enumerate(load_config().get("dev", {}).get("demo_examples") or [], 1)
+    ]
     if not CASES_PATH.exists():
-        return []
+        return pinned
     seen: dict[str, ExampleQuery] = {}
     rows = [json.loads(x) for x in CASES_PATH.read_text(encoding="utf-8").splitlines() if x.strip()]
     for c in sorted(rows, key=lambda c: c["id"]):
@@ -143,7 +155,7 @@ def examples() -> list[ExampleQuery]:
         cfg = c["config"]
         seen[c["category"]] = ExampleQuery(case_id=c["id"], category=c["category"], query=c["query"],
                                            make=cfg["make"], model=cfg["model"], serial=cfg["serial"])  # fmt: skip
-    return list(seen.values())
+    return pinned + list(seen.values())
 
 
 @app.post("/api/feedback", response_model=FeedbackResponse)

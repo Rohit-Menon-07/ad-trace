@@ -3,6 +3,7 @@ import { api } from '../api/client';
 import type { ExampleQuery } from '../types/api';
 
 const CATEGORY_LABEL: Record<string, string> = {
+  demo: 'demo',
   lookup: 'lookup',
   model_applicability: 'applicability',
   serial_unresolved: 'serial',
