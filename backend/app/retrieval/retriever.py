@@ -66,6 +66,7 @@ class SentenceHit:
     dense_rank: int | None
     fused: float
     tags: list[str] = field(default_factory=list)  # top | applicability | supersession | heading
+    local: float = 0.0  # within-record relevance: RRF of sentence-text-only BM25 and cosine (evidence ranking)
 
 
 @dataclass
@@ -130,6 +131,26 @@ class Retriever:
         self._reranker = None
 
     # ------------------------------------------------------------ filters
+
+    def match_tiers(self, f: Filters, cands: set[str]) -> dict[str, int]:
+        """0 = the record lists the requested model (EXACT / whole type / all-family) and its make matches;
+        1 = possible match (series overlap, spelling variant, family-only); 2 = no usable model list or no make.
+        Records kept only because nothing excludes them must not outrank records that actually list the aircraft."""
+        if not (f.make or f.model or f.family):
+            return {}
+        fam = f.family or (model_family(f.model) if f.model else None)
+        lc = LinkedConfig(None, f.model, fam, None, date.today())
+        tiers: dict[str, int] = {}
+        for r in cands:
+            rec = self.engine.records[r]
+            tier = 0
+            if f.model or f.family:
+                kind = match_model(lc, rec).kind
+                tier = 0 if kind == Match.EXACT else 2 if kind in (Match.UNKNOWN, Match.NO_MATCH) else 1
+            if f.make and make_relation(f.make, rec) == "missing":
+                tier = max(tier, 2)
+            tiers[r] = tier
+        return tiers
 
     def apply_filters(self, f: Filters) -> tuple[set[str], list[FilterReport]]:
         cands = set(self.meta)
@@ -226,12 +247,18 @@ class Retriever:
         for rid, units in per_record.items():
             units.sort(key=lambda t: (-t[0], t[1]))
             scored.append((units[0][0] + bonus * sum(s for s, _ in units[1:3]), rid))
-        scored.sort(key=lambda t: (-t[0], t[1]))
+        tiers = self.match_tiers(filters, cands)
+        scored.sort(key=lambda t: (tiers.get(t[1], 0), -t[0], t[1]))
         scored = self._maybe_rerank(query, scored, per_record)
+        top_ids = [rid for _, rid in scored[:k]]
+        text_bm25 = self._bm25_text_only(fts_query, set(top_ids)) if mode in ("bm25", "hybrid") else {}
+        if mode in ("dense", "hybrid") and not cos and query.strip():
+            cos = self._dense(query, set(top_ids))
         records = [
-            RecordHit(rid, i + 1, round(score, 6), self._evidence(rid, per_record[rid], bm25, cos, b_rank, d_rank))
+            RecordHit(rid, i + 1, round(score, 6),
+                      self._evidence(rid, per_record[rid], bm25, cos, b_rank, d_rank, text_bm25))
             for i, (score, rid) in enumerate(scored[:k])
-        ]
+        ]  # fmt: skip
         t4 = time.perf_counter()
         b_norm = [s / (1 + s) for s in bm25.values() if s > 0]
         features = {
@@ -241,6 +268,7 @@ class Retriever:
             "gap_1_2": (scored[0][0] - scored[1][0]) if len(scored) > 1 else (scored[0][0] if scored else 0.0),
             "bm25_hits": len(bm25),
             "candidates": len(cands),
+            "tier0_records": sum(1 for v in tiers.values() if v == 0) if tiers else None,
         }
         timings = {"filters": (t1 - t0) * 1e3, "bm25": (t2 - t1) * 1e3, "dense": (t3 - t2) * 1e3,
                    "fuse_and_evidence": (t4 - t3) * 1e3, "total": (t4 - t0) * 1e3}  # fmt: skip
@@ -258,18 +286,56 @@ class Retriever:
         return SentenceHit(unit, text, start, end, b, (b / (1 + b)) if b and b > 0 else None, cos.get(unit),
                            b_rank.get(unit), d_rank.get(unit), round(fused, 6), tags)  # fmt: skip
 
+    def _bm25_text_only(self, fts_query: str | None, rids: set[str]) -> dict[str, float]:
+        """BM25 on sentence_text alone (record-level columns weighted 0) for the top records' sentences.
+
+        Every sentence row repeats its record's make/models/subject, so a model in the query lifts all of a
+        record's sentences equally and length normalisation then favours the shortest ones. Ranking sentences
+        *within* a record therefore uses the sentence text only."""
+        if not fts_query or not rids:
+            return {}
+        weights = weights_sql({"sentence_text": 1.0, "subject_heading": 0.0, "make": 0.0, "models": 0.0,
+                               "models_norm": 0.0}, SENTENCE_COLUMNS, 2)  # fmt: skip
+        sql = (
+            f"SELECT sentence_id, record_id, bm25(sentences_fts, {weights}) "
+            "FROM sentences_fts WHERE sentences_fts MATCH ?"
+        )
+        return {sid: -s for sid, rid, s in self.conn.execute(sql, (fts_query,)) if rid in rids and s < 0}
+
+    def _local_scores(self, rid: str, text_bm25: dict[str, float], cos: dict[str, float]) -> dict[str, float]:
+        """Within-record RRF of sentence-text BM25 rank and cosine rank (header is identical, so cosine
+        differences within a record come from the sentence text)."""
+        sids = self.by_record.get(rid, [])
+        local: dict[str, float] = defaultdict(float)
+        for scores in ({s: text_bm25[s] for s in sids if s in text_bm25}, {s: cos[s] for s in sids if s in cos}):
+            for r, s in enumerate(sorted(scores, key=lambda x: (-scores[x], x)), 1):
+                local[s] += 1.0 / (self.rrf_k + r)
+        return local
+
     def _evidence(self, rid: str, units: list[tuple[float, str]], bm25: dict[str, float], cos: dict[str, float],
-                  b_rank: dict[str, int], d_rank: dict[str, int]) -> list[SentenceHit]:  # fmt: skip
-        """Top-N fused sentences + every sentence the engine relies on (applicability, supersession)."""
+                  b_rank: dict[str, int], d_rank: dict[str, int],
+                  text_bm25: dict[str, float] | None = None) -> list[SentenceHit]:  # fmt: skip
+        """Top-N sentences by within-record relevance + every sentence the engine relies on (applicability,
+        supersession). A record without sentences contributes its heading unit."""
         fused = {u: s for s, u in units}
+        local = self._local_scores(rid, text_bm25 or {}, cos)
         chosen: dict[str, list[str]] = {}
-        for _, u in units[: int(self.rcfg["evidence_top_sentences"])]:
-            chosen.setdefault(u, []).append("heading" if u.endswith("#heading") else "top")
+        if not self.by_record.get(rid):
+            for _, u in units[:1]:
+                chosen.setdefault(u, []).append("heading")
+        ranked = sorted(self.by_record.get(rid, []), key=lambda s: (-local.get(s, 0.0), -fused.get(s, 0.0), s))
+        for sid in ranked[: int(self.rcfg["evidence_top_sentences"])]:
+            if local.get(sid, 0.0) > 0 or fused.get(sid, 0.0) > 0:
+                chosen.setdefault(sid, []).append("top")
         for tag in ("applicability", "supersession"):
             for sid in sorted(self.anchors[rid][tag]):
                 chosen.setdefault(sid, []).append(tag)
-        hits = [self._hit(u, bm25, cos, b_rank, d_rank, fused.get(u, 0.0), tags) for u, tags in chosen.items()]
-        return sorted(hits, key=lambda h: (-h.fused, h.sentence_id))
+        hits = []
+        for u, tags in chosen.items():
+            h = self._hit(u, bm25, cos, b_rank, d_rank, fused.get(u, 0.0), tags)
+            h.local = round(local.get(u, 0.0), 6)
+            hits.append(h)
+        return sorted(hits, key=lambda h: (-h.local, -h.fused, h.sentence_id))
 
     def _maybe_rerank(self, query: str, scored: list[tuple[float, str]],
                       per_record: dict[str, list[tuple[float, str]]]) -> list[tuple[float, str]]:  # fmt: skip

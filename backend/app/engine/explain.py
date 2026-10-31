@@ -49,8 +49,10 @@ def link_model(index: EngineIndex, model: str | None) -> tuple[str | None, str |
     norm = norm_model(model)
     fam = model_family(norm)
     known = {m for r in index.records.values() for m in r.models}
-    has_variants = any(model_family(m) == norm and m != norm for m in known)
-    if norm == fam and has_variants:
+    variants = [m for m in known if model_family(m) == norm and m != norm]
+    # Same rule as pipeline.linker: a bare type with 2+ variants is a family query; an exact designator with at
+    # most one variant ("PW4090" vs "PW4090-3") is a model.
+    if norm == fam and variants and not (norm in known and len(variants) <= 1):
         return None, fam
     return norm, fam
 

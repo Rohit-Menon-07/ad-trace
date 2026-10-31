@@ -120,6 +120,33 @@ def test_model_filter_mirrors_engine(retriever: Retriever) -> None:
     assert kept & {"R0003", "R0011", "R0021", "R0061"}
 
 
+def test_records_listing_the_model_rank_before_unknown_lists(retriever: Retriever) -> None:
+    """REAL regression: R0002 lists PW4090 but generic words let records with no model list outrank it."""
+    res = retriever.retrieve("What would the proposal for the PW4090 engines require?", Filters(model="PW4090"))
+    assert res.records[0].record_id == "R0002" and res.features["tier0_records"] == 1
+    res = retriever.retrieve("radio management panels", Filters(make="Airbus SAS", model="A330-243"), k=20)
+    tiers = retriever.match_tiers(Filters(make="Airbus SAS", model="A330-243"), {h.record_id for h in res.records})
+    order = [tiers[h.record_id] for h in res.records]
+    assert order == sorted(order) and "R0012" not in [h.record_id for h in res.records[:8]]
+
+
+def test_within_record_evidence_uses_sentence_text(retriever: Retriever) -> None:
+    """REAL regression: the radio-management-panel sentence R0003#s2 must be chosen as evidence even though every
+    R0003 sentence matches the model columns equally."""
+    q = "Which proposed ADs concern the radio management panels on our A330-243?"
+    hit = next(h for h in retriever.retrieve(q, Filters(make="Airbus SAS", model="A330-243")).records
+               if h.record_id == "R0003")  # fmt: skip
+    top = [s.sentence_id for s in hit.sentences if "top" in s.tags]
+    assert "R0003#s2" in top
+
+
+def test_explain_link_model_matches_pipeline_linker(retriever: Retriever) -> None:
+    from backend.app.engine.explain import link_model
+
+    assert link_model(retriever.engine, "PW4090") == ("PW4090", "PW4090")
+    assert link_model(retriever.engine, "A330") == (None, "A330")
+
+
 def test_duplicates_excluded_by_default_and_includable(retriever: Retriever) -> None:
     q = retriever.meta["R0195"][2]
     assert "R0195" not in [h.record_id for h in retriever.retrieve(q, k=50).records]

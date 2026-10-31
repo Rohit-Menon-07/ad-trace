@@ -168,3 +168,29 @@ Deviations from docs/SPEC.md and choices made where it was ambiguous. One line e
      - Premises whose make/model can't be linked are left "unchecked", never refused.
 104. **Gate order: empty → injection → out of scope → entities → premises.** NO_RETRIEVAL_HIT and EMPTY_SOURCE_TEXT run after retrieval. LOW_RETRIEVAL_SCORE and APPLICABILITY_UNDETERMINED are explicit hooks that never stop yet (Prompt 10).
 105. **The FAKE LLM (`LLM_MODE=fake`) has a crude regex fallback for `parse_query`**, so the CLI works offline; tests always register their own outputs. The live test is marked `live` and deselected by default (`pytest -m live`).
+
+## Prompt 8: grounded generation (items marked REVIEW need a human decision)
+
+106. **REVIEW. Sonnet 5.5 generation runs with `thinking: between_tools` (its lowest setting), effort medium, `max_tokens` 1200, and no temperature.** Thinking counts toward `max_tokens`, so adaptive thinking could exhaust the 1200-token budget before the tool call. A `max_tokens` stop is an LLMError, which falls back to the extractive answer.
+107. **Validation in two layers:**
+     - Pydantic (schema; ≤ 5 rationale steps) plus `pack_violations` (hard rules: ≤ 6 claims; every evidence/fact id must exist; each claim needs evidence_ids + quote, or fact_ids; a quote needs an evidence id; 2–5 rationale steps unless cannot_answer) trigger the single retry, then LLM_ERROR → extractive fallback.
+     - Word-count and "ends with [ids]" limits are soft `style_warnings`: Prompt 9 verification decides what survives.
+
+     The strict tool schema drops `maxItems`/`maxLength` (not supported in strict mode); Pydantic enforces them.
+108. **Pack:**
+     - At most 14 sentences, chosen round-robin across the top records in retrieval order. Within a record, engine anchor sentences come first, then relevance; the output is ordered by record then sentence index.
+     - `fr_citation` = the parsed "91 FR 66016" form (falls back to the raw Citation text).
+     - Multi-make records show at most 3 makes + "(+N more)".
+     - Dataset and user text are HTML-escaped (`&`, `<`, `>`; attributes also `"`). Prompt 9's quote check must unescape before comparing.
+     - The exact pack text is returned in `GenerationResult.pack.text`; Prompt 10 writes it to the audit log.
+109. **Computed facts are generated from the engine's Applicability, RecordStatus and Lineage.** Applicability lines carry the evidence ids; lineage lines carry extraction ids. "would supersede AD X (target not in dataset)" is always worded as a proposal.
+110. **The extractive answer uses each of the top 3 records' most relevant sentence verbatim (quote = full sentence), plus every computed fact for that record as its own claim.** It has no rationale steps and may exceed 6 claims. `mode` is `extractive` (search_only) or `extractive_fallback` (LLM error, with the error text). The UI shows a banner from the S6 trace detail `answer_mode`.
+111. **REVIEW. Retrieval fix 1 (found while building packs): within-record evidence is now ranked by RRF of a sentence-text-only BM25 (record columns weighted 0) and cosine.** Every FTS row repeats the record's models, so a model in the query lifted all of a record's sentences equally, and length normalisation picked the shortest ("This proposed AD also reduces the applicability.") over the radio-management-panel sentence R0003#s2.
+112. **REVIEW. Retrieval fix 2: with a make/model filter, the final record order is tiered by the engine match before score.**
+     - Tier 0 = the record lists the aircraft (EXACT / whole type / all-family).
+     - Tier 1 = possible (series overlap, spelling variant, family-only).
+     - Tier 2 = no model list or no make.
+
+     Without it, ~50 records with no model list (kept so UNDETERMINED is visible) outranked R0002, which lists PW4090. `features.tier0_records` reports how many records matched outright.
+113. **`engine.explain.link_model` (used by the CLIs) now uses the same family rule as `pipeline.linker`** (an exact designator with ≤ 1 variant is a model): PW4090 had been treated as a family.
+114. **`scripts/live_generate.py` runs the 3 live queries** (pack, raw tool output, tokens/cost). It is blocked until `data/.env` holds a real key; until then each query shows the extractive fallback with the reason.

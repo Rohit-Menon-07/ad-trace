@@ -31,10 +31,20 @@ function droppedClaims(r: SearchResponse): number | null {
   return typeof n === 'number' ? n : null;
 }
 
+/** S6 trace details.answer_mode: "llm" | "extractive" (search-only) | "extractive_fallback" (LLM failed). */
+function answerMode(r: SearchResponse): { mode: string; error?: string } | null {
+  const s6 = r.trace.find((s) => s.stage.startsWith('S6'));
+  const mode = s6?.details['answer_mode'];
+  if (typeof mode !== 'string') return null;
+  const error = s6?.details['error'];
+  return { mode, error: typeof error === 'string' ? error : undefined };
+}
+
 export function ResultCard({ response, activeId, onOpen, onClarify }: Props) {
   const numbering = citationNumbering(response);
   const isAnswer = response.status === 'answered' || response.status === 'partial';
   const dropped = droppedClaims(response);
+  const am = answerMode(response);
   return (
     <article className="rounded border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-900">
       <ProposedBanner disclaimer={response.disclaimer} />
@@ -53,6 +63,13 @@ export function ResultCard({ response, activeId, onOpen, onClarify }: Props) {
             {response.status === 'partial' && dropped !== null && (
               <p role="status" className="rounded border border-amber-500 bg-amber-50 px-3 py-2 text-sm text-amber-950 dark:bg-amber-950/30 dark:text-amber-50">
                 Partial answer: {dropped} claim{dropped === 1 ? '' : 's'} removed by verification. Only verified claims are shown.
+              </p>
+            )}
+            {am && am.mode !== 'llm' && (
+              <p role="status" className="rounded border-2 border-slate-500 px-3 py-2 text-sm">
+                <span className="font-semibold">{am.mode === 'extractive' ? 'Search-only answer.' : 'Extractive fallback: the answer writer was unavailable.'}</span>{' '}
+                Sentences below are quoted verbatim from the records with the computed facts; no model-written summary.
+                {am.error ? ` (${am.error})` : ''}
               </p>
             )}
             <ClaimList claims={response.claims} numbering={numbering} activeId={activeId} onOpen={onOpen} />

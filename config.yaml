@@ -7,7 +7,7 @@ models:
   verifier: claude-haiku-5-5         # S7 independent verifier (H6)
   # temperature is NOT sent: Claude Haiku 5.5 and Sonnet 5.5 reject non-default sampling parameters (400),
   # and API version 2026-10-21 rejects them on every model. Determinism comes from the response cache (H11).
-  max_tokens_generation: 16000
+  max_tokens_generation: 1200        # Prompt 8 spec; thinking is between_tools so the budget is for output
   max_tokens_parser: 2048
   max_tokens_verifier: 1024
 
@@ -19,7 +19,7 @@ llm:
   # tool_choice auto + strict tool schema + an explicit instruction, and a missing tool call is retried.
   model_options:
     claude-haiku-5-5: {forced_tool_choice: true, thinking: disabled, effort: low}
-    claude-sonnet-5-5: {forced_tool_choice: false, thinking: adaptive, effort: medium}
+    claude-sonnet-5-5: {forced_tool_choice: false, thinking: between_tools, effort: medium}
   pricing_usd_per_mtok:              # first-party API list prices (input, output); cost is an estimate
     claude-haiku-5-5: [0.10, 0.50]
     claude-sonnet-5-5: [2.00, 10.00]

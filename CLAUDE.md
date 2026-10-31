@@ -65,6 +65,8 @@ One sheet, 431 rows, 22 columns: Docket Number, Subject Heading, Status, CFR Par
 - `backend/app/llm/`: client.py (`LLMClient.call_tool`: one structured tool call validated by Pydantic; forced tool_choice for Haiku, auto+strict for Sonnet 5.5; NO temperature (400 on these models); 20 s timeout, 2 SDK retries, 1 validation retry; sha256 disk cache; logs/llm_calls.jsonl with tokens + cost; key loaded from data/.env, never logged), fake.py (`LLM_MODE=fake`, `fake.register(tool, output, when=...)`), prompts/parse_query.md.
 - `backend/app/pipeline/`: query.py (ParsedQuery + `parse_query`, CLI `python -m backend.app.pipeline.query "..." [--make --model --serial --as-of]`), linker.py (`Linker.from_db`, `link_query(parsed, UIFields, linker)` -> LinkedQuery.to_config()), checks.py (injection, out-of-scope, premise checks via the engine), gates.py (`run_pre_retrieval_gates`, post-retrieval gates, Prompt-10 hooks).
 
+- `backend/app/pipeline/generate.py`: `build_pack` (escaped <evidence>/<computed_facts>/<user_question>, max 14 sentences), `generate(question, records, mode)` (Sonnet `submit_answer`, validated, 1 retry, LLM_ERROR -> `extractive_answer`), `pack_records_from_retrieval`, CLI; prompt in `llm/prompts/generate.md` (golden-tested). `scripts/live_generate.py` = 3 live queries.
+
 ## Progress log
 - Prompt 1: repo scaffold, CLAUDE.md, DECISIONS.md, frontend shell on MOCK data with dev scenario switcher.
 - Prompt 2: Pydantic schemas + generated TS types, FastAPI mock backend (all 8 endpoints, mock=true), UI wired to the API, pytest suite, `make dev` runs both servers.
@@ -73,3 +75,4 @@ One sheet, 431 rows, 22 columns: Docket Number, Subject Heading, Status, CFR Par
 - Prompt 5: deterministic applicability/status/lineage engine + explain CLI; 34 synthetic + 20 real verdict cases, safety-invariant property tests; 213 tests.
 - Prompt 6: hybrid retrieval (FTS5 + BGE + RRF), engine-consistent filters, evidence selection, CLI + latency bench; 255 tests.
 - Prompt 7: LLM client (fake mode, cache, cost log), Haiku query parser, closed-vocab linker, injection/out-of-scope/premise checks, gates; 301 tests. Live smoke test BLOCKED: data/.env holds a placeholder, not an sk-ant- key.
+- Prompt 8: evidence pack + computed facts, grounded Sonnet generation (fake-tested), extractive fallback + UI banner, retrieval fixes (within-record evidence ranking, match tiers); 329 tests. Live run BLOCKED on the same placeholder key.

@@ -17,6 +17,7 @@ import json
 import logging
 import os
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -59,6 +60,9 @@ def load_env_files() -> None:
             os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
 
 
+_DROP_KEYS = {"title", "default", "maxItems", "minItems", "maxLength", "minLength"}
+
+
 def strict_schema(model: type[BaseModel]) -> dict[str, Any]:
     """Pydantic JSON schema -> strict tool schema: $refs inlined, every object closed and fully required."""
     raw = model.model_json_schema()
@@ -68,7 +72,8 @@ def strict_schema(model: type[BaseModel]) -> dict[str, Any]:
         if isinstance(node, dict):
             if "$ref" in node:
                 return walk(defs[node["$ref"].rsplit("/", 1)[-1]])
-            out = {k: walk(v) for k, v in node.items() if k not in ("title", "default")}
+            # Length/count limits are enforced by Pydantic after the call, not by the strict tool schema.
+            out = {k: walk(v) for k, v in node.items() if k not in _DROP_KEYS}
             if out.get("type") == "object" and "properties" in out:
                 out["additionalProperties"] = False
                 out["required"] = list(out["properties"])
@@ -144,6 +149,7 @@ class LLMClient:
         tool_description: str,
         output_model: type[T],
         max_tokens_key: str,
+        extra_validator: Callable[[Any], str | None] | None = None,
     ) -> LLMResult:
         """One structured call: the model must answer by calling `tool_name`; the input is validated as output_model."""
         model = self.models[model_key]
@@ -156,6 +162,9 @@ class LLMClient:
             from backend.app.llm.fake import answer
 
             out = self._validate(output_model, answer(tool_name, user))
+            problem = extra_validator(out) if extra_validator else None
+            if problem:
+                raise LLMError(f"{purpose}: FAKE output rejected: {problem}")
             res = LLMResult(out, model, 0, 0, 0.0, False, (time.perf_counter() - t0) * 1e3, "fake")
             self._log_call(purpose, res, key)
             return res
@@ -185,6 +194,11 @@ class LLMClient:
                 last_error = exc
                 log.warning("%s: tool input failed validation (attempt %d)", purpose, attempt + 1)
                 continue
+            problem = extra_validator(out) if extra_validator else None
+            if problem:
+                last_error = ValueError(problem)
+                log.warning("%s: tool input rejected (attempt %d): %s", purpose, attempt + 1, problem)
+                continue
             self.cache_dir.mkdir(parents=True, exist_ok=True)
             cache_file.write_text(json.dumps({"input": raw, "input_tokens": tokens_in, "output_tokens": tokens_out,
                                               "request_id": request_id, "model": model}), encoding="utf-8")  # fmt: skip
@@ -209,8 +223,8 @@ class LLMClient:
             "tools": [{**tool, "strict": True}],
             "tool_choice": {"type": "tool", "name": tool_name} if forced else {"type": "auto"},
         }
-        if opts.get("thinking") == "disabled":
-            kwargs["thinking"] = {"type": "disabled"}
+        if opts.get("thinking") in ("disabled", "between_tools"):
+            kwargs["thinking"] = {"type": opts["thinking"]}
         if opts.get("effort"):
             kwargs["output_config"] = {"effort": opts["effort"]}
         try:
@@ -221,6 +235,8 @@ class LLMClient:
             raise LLMError(f"Anthropic connection error: {exc}") from exc
         if resp.stop_reason == "refusal":
             raise LLMError("model declined the request (stop_reason=refusal)")
+        if resp.stop_reason == "max_tokens":
+            raise LLMError(f"output truncated at max_tokens={max_tokens}; raise it in config.yaml")
         block = next((b for b in resp.content if b.type == "tool_use" and b.name == tool_name), None)
         # With tool_choice auto the model may skip the tool: return {} so validation fails and the call retries.
         raw = dict(block.input) if block is not None else {}
